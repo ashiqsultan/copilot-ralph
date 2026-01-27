@@ -28,6 +28,8 @@
 
 import './index.css';
 import { initPrdEditor, setPrdItems } from './prdeditor.js';
+import { initFolderManager, getCurrentFolderPath } from './folderManager.js';
+import { initPrdFileManager, checkPrdFile } from './prdFileManager.js';
 
 // Load component HTML
 async function loadComponent(elementId, filePath) {
@@ -37,77 +39,68 @@ async function loadComponent(elementId, filePath) {
 }
 
 // Load PRD editor into container
-async function loadPrdEditor() {
+async function loadPrdEditor(initialItems = null) {
   const response = await fetch('prdeditor.html');
   const html = await response.text();
   const container = document.getElementById('prdEditorContainer');
   if (container) {
     container.innerHTML = html;
-    initPrdEditor(() => currentFolderPath, refreshPrdData);
+    initPrdEditor(getCurrentFolderPath, refreshPrdData);
+    
+    // Set initial items after HTML is loaded and initialized
+    if (initialItems !== null) {
+      setPrdItems(initialItems);
+    }
   }
+}
+
+// Load top bar
+async function loadTopBar() {
+  await loadComponent('topbar-container', 'topbar.html');
+  // Initialize folder manager after topbar is loaded
+  initFolderManager(handleFolderChange);
 }
 
 // Load both columns
+loadTopBar();
 loadComponent('left-column', 'left.html');
 loadComponent('right-column', 'right.html');
 
-// State for current folder
-let currentFolderPath = null;
-let hasPrdFile = false;
+// Initialize PRD file manager
+initPrdFileManager(handlePrdFileStatusChange);
 
-// DOM elements
-const openFolderBtn = document.getElementById('openFolderBtn');
-const folderPathDisplay = document.getElementById('folderPathDisplay');
-
-// Update folder path display
-function updateFolderDisplay() {
-  if (currentFolderPath) {
-    folderPathDisplay.textContent = currentFolderPath;
-    folderPathDisplay.classList.remove('text-gray-400');
-    folderPathDisplay.classList.add('text-white');
-  } else {
-    folderPathDisplay.textContent = 'No folder selected';
-    folderPathDisplay.classList.remove('text-white');
-    folderPathDisplay.classList.add('text-gray-400');
-  }
+// Handle folder change event
+async function handleFolderChange(folderPath) {
+  updateNoProjectMessage(false);
+  await checkPrdFile(folderPath);
 }
 
-// Check for prd.json file
-async function checkPrdFile() {
-  if (!currentFolderPath) return;
-  
-  try {
-    const prdContent = await window.electronAPI.readPrdFile(currentFolderPath);
-    if (prdContent) {
-      hasPrdFile = true;
-      console.log('prd.json content:', prdContent);
-      updatePrdButton(false);
-      showPrdEditor(true);
-      setPrdItems(prdContent);
-    } else {
-      hasPrdFile = false;
-      updatePrdButton(true);
-      showPrdEditor(false);
-    }
-  } catch (error) {
-    hasPrdFile = false;
+// Handle PRD file status change
+async function handlePrdFileStatusChange(status) {
+  if (status.exists) {
+    updatePrdButton(false);
+    await showPrdEditor(true, status.content);
+  } else {
     updatePrdButton(true);
-    showPrdEditor(false);
+    await showPrdEditor(false);
   }
 }
 
 // Refresh PRD data
 async function refreshPrdData() {
-  await checkPrdFile();
+  const folderPath = getCurrentFolderPath();
+  if (folderPath) {
+    await checkPrdFile(folderPath);
+  }
 }
 
 // Show/hide PRD editor
-function showPrdEditor(show) {
+async function showPrdEditor(show, initialItems = null) {
   const container = document.getElementById('prdEditorContainer');
   if (container) {
     container.style.display = show ? 'block' : 'none';
     if (show) {
-      loadPrdEditor();
+      await loadPrdEditor(initialItems);
     }
   }
 }
@@ -120,33 +113,11 @@ function updatePrdButton(show) {
   }
 }
 
-// Create prd.json file
-async function createPrdFile() {
-  if (!currentFolderPath) return;
-  
-  const defaultPrd = ""
-  
-  const success = await window.electronAPI.createPrdFile(currentFolderPath, JSON.stringify(defaultPrd, null, 2));
-  if (success) {
-    console.log('prd.json created successfully');
-    await checkPrdFile();
+// Update "No project selected" message visibility
+function updateNoProjectMessage(show) {
+  const noProjectMessage = document.getElementById('noProjectMessage');
+  if (noProjectMessage) {
+    noProjectMessage.style.display = show ? 'flex' : 'none';
   }
 }
 
-// Make createPrdFile globally accessible
-window.createPrdFile = createPrdFile;
-
-// Open folder button handler
-openFolderBtn.addEventListener('click', async () => {
-  const folderPath = await window.electronAPI.openFolder();
-  
-  if (folderPath) {
-    currentFolderPath = folderPath;
-    updateFolderDisplay();
-    console.log('Folder selected:', folderPath);
-    await checkPrdFile();
-  }
-});
-
-// Initialize display
-updateFolderDisplay();
