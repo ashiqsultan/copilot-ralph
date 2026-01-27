@@ -1,13 +1,43 @@
 // Executor - Handles CLI command execution and progress display
 import { getCurrentFolderPath } from './folderManager.js';
+import { getNextItem } from './prdFileManager.js';
 
 let outputContainer = null;
 let startButton = null;
 let statusIndicator = null;
 let isRunning = false;
 
-// Fixed hardcoded prompt for now
-const HARDCODED_PROMPT = "Hello, can you List the files in this directory and tell me what programming language is this project about";
+// Structured prompt template for GitHub Copilot
+// TODO: Add a summary or learning md file to pass in next iteration
+// TODO: Actual implement ralph prompt
+function buildPrompt(requirement) {
+  return `You are an autonomous coding agent. You must complete the following requirement without asking any questions or seeking permission from the user. Make all decisions independently and implement the solution directly.
+  You are provided full permission and access
+
+## REQUIREMENT
+ID: ${requirement.id}
+Title: ${requirement.title}
+Description: ${requirement.description}
+
+## INSTRUCTIONS
+1. Analyze the requirement thoroughly
+2. Make all necessary decisions autonomously - do NOT ask for clarification or permission
+3. Implement the complete solution
+4. Test your implementation if applicable
+5. When the requirement is fully implemented and working, respond with exactly: <status>done</status>
+
+## RULES
+- Make a step by step plan before proceeding 
+- Never ask questions - make reasonable assumptions and proceed
+- Never wait for user confirmation - act decisively
+- Complete the entire requirement before marking as done
+- Only output <status>done</status> when the implementation is fully complete and verified
+
+Begin implementation now.`;
+}
+
+// Fallback prompt when no requirement is found
+const FALLBACK_PROMPT = "No pending requirements found. All tasks are complete.";
 
 // Initialize executor
 export function initExecutor() {
@@ -71,8 +101,23 @@ async function handleStartClick() {
   updateStatus('running', 'Running...');
 
   try {
+    // Get the next item to work on
+    const nextItem = await getNextItem(currentFolderPath);
+    
+    let prompt;
+    if (nextItem && typeof nextItem === 'object') {
+      // Build prompt with the requirement
+      prompt = buildPrompt(nextItem);
+      appendOutput(`Working on: [${nextItem.id}] ${nextItem.title}`, 'stdout');
+      appendOutput('---', 'stdout');
+    } else {
+      // No pending items
+      prompt = FALLBACK_PROMPT;
+      appendOutput('No pending requirements found.', 'stdout');
+    }
+
     // Start the CLI execution with the current folder path
-    const result = await window.electronAPI.executeCommand(HARDCODED_PROMPT, currentFolderPath);
+    const result = await window.electronAPI.executeCommand(prompt, currentFolderPath);
     
     if (!result.success) {
       appendOutput(`Failed to start: ${result.error}`, 'error');

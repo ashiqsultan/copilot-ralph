@@ -103,3 +103,22 @@ export async function savePrdFile(folderPath, content) {
     return false;
   }
 }
+
+// Get next item to work on
+export async function getNextItem(folderPath = getCurrentFolderPath()) {
+  if (!folderPath) return null;
+
+  try {
+    const prdContent = await readPrdFile(folderPath);
+    if (!prdContent) return null;
+
+    if (Array.isArray(prdContent)) {
+      return prdContent.find(item => item.isDone === false) || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error getting next item:", error);
+    return null;
+  }
+}
