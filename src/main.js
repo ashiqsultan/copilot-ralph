@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import started from 'electron-squirrel-startup';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -101,5 +102,52 @@ ipcMain.handle('fs:savePrdFile', async (event, folderPath, content) => {
   } catch (error) {
     console.error('Error saving prd.json:', error);
     return false;
+  }
+});
+
+// IPC handler for executing CLI commands
+ipcMain.handle('executor:run', async (event, prompt) => {
+  try {
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (!mainWindow) {
+      return { success: false, error: 'No window available' };
+    }
+
+    // Build the command arguments
+    const args = ['--yolo', '--model', 'gpt-4.1', '-i', `"${prompt}"`];
+
+    // Spawn the copilot process
+    const child = spawn('copilot', args, {
+      shell: true,
+      env: { ...process.env }
+    });
+
+    // Handle stdout - stream to renderer
+    child.stdout.on('data', (data) => {
+      const text = data.toString();
+      mainWindow.webContents.send('executor:stdout', text);
+    });
+
+    // Handle stderr - stream to renderer
+    child.stderr.on('data', (data) => {
+      const text = data.toString();
+      mainWindow.webContents.send('executor:stderr', text);
+    });
+
+    // Handle process completion
+    child.on('close', (code, signal) => {
+      mainWindow.webContents.send('executor:complete', { code, signal });
+    });
+
+    // Handle spawn errors
+    child.on('error', (error) => {
+      mainWindow.webContents.send('executor:stderr', `Spawn error: ${error.message}`);
+      mainWindow.webContents.send('executor:complete', { code: 1, error: error.message });
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error executing command:', error);
+    return { success: false, error: error.message };
   }
 });

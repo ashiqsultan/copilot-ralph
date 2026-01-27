@@ -30,6 +30,7 @@ import './index.css';
 import { initPrdEditor, setPrdItems } from './prdeditor.js';
 import { initFolderManager, getCurrentFolderPath } from './folderManager.js';
 import { initPrdFileManager, checkPrdFile } from './prdFileManager.js';
+import { initExecutor } from './executor.js';
 
 // Load component HTML
 async function loadComponent(elementId, filePath) {
@@ -61,10 +62,17 @@ async function loadTopBar() {
   initFolderManager(handleFolderChange);
 }
 
+// Load right column and initialize executor
+async function loadRightColumn() {
+  await loadComponent('right-column', 'right.html');
+  // Initialize executor after right column is loaded
+  initExecutor();
+}
+
 // Load both columns
 loadTopBar();
 loadComponent('left-column', 'left.html');
-loadComponent('right-column', 'right.html');
+loadRightColumn();
 
 // Initialize PRD file manager
 initPrdFileManager(handlePrdFileStatusChange);
