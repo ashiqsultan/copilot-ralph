@@ -116,14 +116,17 @@ export function renderRequirementsList() {
     <div class="p-3 bg-gray-50 border border-gray-200 rounded">
       <div class="flex items-start justify-between">
         <div class="flex-1">
-          <span class="text-xs text-gray-400 font-mono">ID: ${item.id}</span>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-2.5 h-2.5 rounded-full ${item.isDone ? 'bg-emerald-500' : 'bg-amber-500'}" title="${item.isDone ? 'Completed' : 'Not completed'}"></div>
+            <span class="text-xs text-gray-400 font-mono">ID: ${item.id}</span>
+          </div>
           <h4 class="font-medium text-gray-800">${escapeHtml(item.title)}</h4>
           <p class="text-sm text-gray-600">${escapeHtml(item.description)}</p>
         </div>
         <button onclick="handleEditItem(${item.id})" class="ml-2 p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit requirement">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0  0 2 2h9a2 2 0 0 0 2 -2v-1" />
             <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
             <path d="M16 5l3 3" />
           </svg>

@@ -61,7 +61,7 @@ export async function createPrdFile(folderPath = getCurrentFolderPath()) {
     return false;
   }
 
-  const defaultPrd = { id: 0, title: "", description: "" };
+  const defaultPrd = { id: 0, title: "default", description: "", isDone: false };
 
   const success = await window.electronAPI.createPrdFile(
     folderPath,
