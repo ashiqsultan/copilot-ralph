@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   savePrdFile: (folderPath, content) => ipcRenderer.invoke('fs:savePrdFile', folderPath, content),
 
   // Executor - CLI command execution
-  executeCommand: (prompt) => ipcRenderer.invoke('executor:run', prompt),
+  executeCommand: (prompt, folderPath) => ipcRenderer.invoke('executor:run', prompt, folderPath),
 
   // Event listeners for streaming output
   onExecutorOutput: (callback) => {

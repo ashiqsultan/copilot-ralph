@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import started from 'electron-squirrel-startup';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -105,21 +105,72 @@ ipcMain.handle('fs:savePrdFile', async (event, folderPath, content) => {
   }
 });
 
+// Helper function to get the user's shell PATH
+function getShellPath() {
+  try {
+    if (process.platform === 'win32') {
+      // On Windows, use the system PATH
+      return process.env.PATH;
+    }
+    
+    // On Unix-like systems, get PATH from shell
+    const shell = process.env.SHELL || '/bin/zsh';
+    const shellPath = execSync(`${shell} -ilc 'echo $PATH'`, {
+      encoding: 'utf8',
+      timeout: 5000
+    }).trim();
+    
+    return shellPath;
+  } catch (error) {
+    console.error('Error getting shell PATH:', error);
+    return process.env.PATH;
+  }
+}
+
+// Helper function to find copilot executable
+function findCopilotPath() {
+  try {
+    const shellPath = getShellPath();
+    const command = process.platform === 'win32' ? 'where copilot' : 'which copilot';
+    
+    const result = execSync(command, {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: shellPath },
+      timeout: 5000
+    }).trim();
+    
+    // On Windows, 'where' might return multiple paths, take the first one
+    return process.platform === 'win32' ? result.split('\n')[0] : result;
+  } catch (error) {
+    console.error('Error finding copilot:', error);
+    return 'copilot'; // Fallback to command name
+  }
+}
+
 // IPC handler for executing CLI commands
-ipcMain.handle('executor:run', async (event, prompt) => {
+ipcMain.handle('executor:run', async (event, prompt, folderPath) => {
   try {
     const mainWindow = BrowserWindow.getAllWindows()[0];
     if (!mainWindow) {
       return { success: false, error: 'No window available' };
     }
 
+    if (!folderPath) {
+      return { success: false, error: 'No folder path provided' };
+    }
+
+    // Get the full path to copilot and shell PATH
+    const copilotPath = findCopilotPath();
+    const shellPath = getShellPath();
+
     // Build the command arguments
     const args = ['--yolo', '--model', 'gpt-4.1', '-i', `"${prompt}"`];
 
-    // Spawn the copilot process
-    const child = spawn('copilot', args, {
+    // Spawn the copilot process with the correct environment and working directory
+    const child = spawn(copilotPath, args, {
       shell: true,
-      env: { ...process.env }
+      cwd: folderPath,
+      env: { ...process.env, PATH: shellPath }
     });
 
     // Handle stdout - stream to renderer
