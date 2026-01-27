@@ -108,22 +108,22 @@ export function renderRequirementsList() {
   if (!listContainer) return;
 
   if (prdItems.length === 0) {
-    listContainer.innerHTML = '<p class="text-gray-500 italic">No items found. Create a new item to see</p>';
+    listContainer.innerHTML = '<p class="text-gh-text-muted italic">No items found. Create a new item to see</p>';
     return;
   }
 
   listContainer.innerHTML = prdItems.map(item => `
-    <div class="p-3 bg-gray-50 border border-gray-200 rounded">
+    <div class="p-3 bg-gh-surface border border-gh-border-muted rounded-md">
       <div class="flex items-start justify-between">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-1">
-            <div class="w-2.5 h-2.5 rounded-full ${item.isDone ? 'bg-emerald-500' : 'bg-amber-500'}" title="${item.isDone ? 'Completed' : 'Not completed'}"></div>
-            <span class="text-xs text-gray-400 font-mono">ID: ${item.id}</span>
+            <div class="w-2.5 h-2.5 rounded-full ${item.isDone ? 'bg-gh-green-bright' : 'bg-gh-yellow'}" title="${item.isDone ? 'Completed' : 'Not completed'}"></div>
+            <span class="text-xs text-gh-text-muted font-mono">ID: ${item.id}</span>
           </div>
-          <h4 class="font-medium text-gray-800">${escapeHtml(item.title)}</h4>
-          <p class="text-sm text-gray-600">${escapeHtml(item.description)}</p>
+          <h4 class="font-medium text-gh-text">${escapeHtml(item.title)}</h4>
+          <p class="text-sm text-gh-text-muted">${escapeHtml(item.description)}</p>
         </div>
-        <button onclick="handleEditItem(${item.id})" class="ml-2 p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit requirement">
+        <button onclick="handleEditItem(${item.id})" class="ml-2 p-2 text-gh-text-muted hover:text-gh-blue hover:bg-gh-blue-focus/10 rounded transition-colors" title="Edit requirement">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0  0 2 2h9a2 2 0 0 0 2 -2v-1" />

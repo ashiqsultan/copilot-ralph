@@ -112,16 +112,16 @@ function appendOutput(text, type = 'stdout') {
   // Apply styling based on type
   switch (type) {
     case 'stderr':
-      line.className = 'text-yellow-600';
+      line.className = 'text-gh-yellow';
       break;
     case 'error':
-      line.className = 'text-red-500 font-semibold';
+      line.className = 'text-gh-red font-semibold';
       break;
     case 'success':
-      line.className = 'text-green-600 font-semibold';
+      line.className = 'text-gh-green-bright font-semibold';
       break;
     default:
-      line.className = 'text-gray-800';
+      line.className = 'text-gh-text';
   }
 
   outputContainer.appendChild(line);
@@ -145,11 +145,11 @@ function setRunningState(running) {
     if (running) {
       startButton.disabled = true;
       startButton.classList.add('opacity-50', 'cursor-not-allowed');
-      startButton.classList.remove('hover:bg-blue-600');
+      startButton.classList.remove('hover:bg-gh-green-hover');
     } else {
       startButton.disabled = false;
       startButton.classList.remove('opacity-50', 'cursor-not-allowed');
-      startButton.classList.add('hover:bg-blue-600');
+      startButton.classList.add('hover:bg-gh-green-hover');
     }
   }
 }
@@ -160,7 +160,7 @@ function updateStatus(state, text) {
 
   // Remove previous state classes
   statusIndicator.classList.remove(
-    'bg-gray-400', 'bg-yellow-400', 'bg-green-500', 'bg-red-500',
+    'bg-gh-text-subtle', 'bg-gh-yellow', 'bg-gh-green-bright', 'bg-gh-red',
     'animate-pulse'
   );
 
@@ -169,19 +169,19 @@ function updateStatus(state, text) {
 
   switch (state) {
     case 'running':
-      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-yellow-400 animate-pulse';
+      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-gh-yellow animate-pulse';
       if (label) label.textContent = text;
       break;
     case 'completed':
-      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-green-500';
+      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-gh-green-bright';
       if (label) label.textContent = text;
       break;
     case 'error':
-      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-red-500';
+      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-gh-red';
       if (label) label.textContent = text;
       break;
     default:
-      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-gray-400';
+      if (dot) dot.className = 'status-dot w-3 h-3 rounded-full bg-gh-text-subtle';
       if (label) label.textContent = 'Idle';
   }
 }
