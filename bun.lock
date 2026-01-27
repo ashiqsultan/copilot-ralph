@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "notebooklocal",
+      "name": "copilotralph",
       "dependencies": {
         "@tabler/icons": "^3.36.1",
         "@tailwindcss/vite": "^4.1.18",

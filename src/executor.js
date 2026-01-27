@@ -1,4 +1,5 @@
 // Executor - Handles CLI command execution and progress display
+import { getCurrentFolderPath } from './folderManager.js';
 
 let outputContainer = null;
 let startButton = null;
@@ -6,7 +7,7 @@ let statusIndicator = null;
 let isRunning = false;
 
 // Fixed hardcoded prompt for now
-const HARDCODED_PROMPT = "Hello, can you help me understand about google big query";
+const HARDCODED_PROMPT = "Hello, can you List the files in this directory and tell me what programming language is this project about";
 
 // Initialize executor
 export function initExecutor() {
@@ -54,6 +55,14 @@ async function handleStartClick() {
     return;
   }
 
+  // Get the current folder path
+  const currentFolderPath = getCurrentFolderPath();
+  if (!currentFolderPath) {
+    appendOutput('Error: No folder selected. Please select a folder first.', 'error');
+    updateStatus('error', 'No folder selected');
+    return;
+  }
+
   // Clear previous output
   clearOutput();
   
@@ -62,8 +71,8 @@ async function handleStartClick() {
   updateStatus('running', 'Running...');
 
   try {
-    // Start the CLI execution
-    const result = await window.electronAPI.executeCommand(HARDCODED_PROMPT);
+    // Start the CLI execution with the current folder path
+    const result = await window.electronAPI.executeCommand(HARDCODED_PROMPT, currentFolderPath);
     
     if (!result.success) {
       appendOutput(`Failed to start: ${result.error}`, 'error');
