@@ -7,15 +7,15 @@ function App() {
 
   return (
     <>
-      <div class="bg-gh-bg text-gh-text">
+      <div className="bg-gh-bg text-gh-text">
         <div id="topbar-container">
           <TopBar />
         </div>
 
-        <div class="flex w-full">
-          <div id="left-column" class="w-[70%]"></div>
+        <div className="flex w-full">
+          <div id="left-column" className="w-[70%]"></div>
 
-          <div id="right-column" class="w-[30%]"></div>
+          <div id="right-column" className="w-[30%]"></div>
         </div>
       </div>
     </>
