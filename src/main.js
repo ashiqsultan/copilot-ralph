@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { spawn, execSync } from 'node:child_process';
 import started from 'electron-squirrel-startup';
+import buildPrompt from './buildPrompt';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -274,33 +275,6 @@ async function getNextIncompleteRequirement(folderPath) {
   }
 }
 
-// Build prompt from requirement
-function buildPrompt(requirement) {
-  return `You are an autonomous coding agent. You must complete the following requirement. Make all decisions independently and implement the solution directly dont ask for user opinions or choice.
-  You are provided full permission and access so dont ask any permissions.
-
-## REQUIREMENT
-ID: ${requirement.id}
-Title: ${requirement.title}
-Description: ${requirement.description}
-
-## INSTRUCTIONS
-1. Analyze the requirement thoroughly
-2. Make all necessary decisions autonomously - do NOT ask for clarification or permission
-3. Implement the complete solution
-4. Test your implementation if applicable
-5. When the requirement is fully implemented and working, respond with exactly: <status>done</status>
-
-## RULES
-- Make a step by step plan before proceeding 
-- Never ask questions - make reasonable assumptions and proceed
-- Never wait for user confirmation - act decisively
-- Complete the entire requirement before marking as done
-- Only output <status>done</status> when the implementation is fully complete and verified
-
-Begin implementation now.`;
-}
-
 // IPC handler for executing CLI commands
 ipcMain.handle('executor:run', async (event, requirementId, folderPath) => {
   try {
@@ -326,7 +300,7 @@ ipcMain.handle('executor:run', async (event, requirementId, folderPath) => {
     }
 
     // Build the prompt from the requirement
-    const prompt = buildPrompt(requirement);
+    const prompt = buildPrompt(requirement.id, requirement.title, requirement.description);
 
     // Get the full path to copilot and shell PATH
     const copilotPath = findCopilotPath();
