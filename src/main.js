@@ -147,8 +147,162 @@ function findCopilotPath() {
   }
 }
 
+// Helper function to find git executable
+function findGitPath() {
+  try {
+    const shellPath = getShellPath();
+    const command = process.platform === 'win32' ? 'where git' : 'which git';
+    
+    const result = execSync(command, {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: shellPath },
+      timeout: 5000
+    }).trim();
+    
+    return process.platform === 'win32' ? result.split('\n')[0] : result;
+  } catch (error) {
+    console.error('Error finding git:', error);
+    return null;
+  }
+}
+
+// Helper function to commit changes after requirement completion
+async function commitRequirementChanges(folderPath, requirement) {
+  const gitPath = findGitPath();
+  const shellPath = getShellPath();
+  
+  if (!gitPath) {
+    console.log("Can't use git - executable not found");
+    return { success: false, error: "Can't use git" };
+  }
+  
+  const execOptions = {
+    cwd: folderPath,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: shellPath },
+    timeout: 30000
+  };
+  
+  try {
+    // Check if git is initialized
+    try {
+      execSync(`"${gitPath}" rev-parse --git-dir`, execOptions);
+    } catch {
+      // Git not initialized, init it
+      execSync(`"${gitPath}" init`, execOptions);
+      console.log('Git repository initialized');
+    }
+    
+    // Stage all changes
+    execSync(`"${gitPath}" add -A`, execOptions);
+    
+    // Check if there are changes to commit
+    try {
+      execSync(`"${gitPath}" diff --cached --quiet`, execOptions);
+      // If no error, there are no changes to commit
+      console.log('No changes to commit');
+      return { success: true, message: 'No changes to commit' };
+    } catch {
+      // There are changes to commit
+    }
+    
+    // Commit with requirement info
+    const commitMessage = `[${requirement.id}] ${requirement.title}`;
+    execSync(`"${gitPath}" commit -m "${commitMessage}"`, execOptions);
+    
+    console.log(`Committed: ${commitMessage}`);
+    return { success: true, message: `Committed: ${commitMessage}` };
+  } catch (error) {
+    console.error('Error committing changes:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Helper function to read prd.json and find requirement by ID
+async function getRequirementById(folderPath, requirementId) {
+  try {
+    const prdPath = path.join(folderPath, 'prd.json');
+    const content = await fs.readFile(prdPath, 'utf-8');
+    const prdContent = JSON.parse(content);
+    
+    if (Array.isArray(prdContent)) {
+      return prdContent.find(item => item.id === requirementId) || null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error reading requirement:', error);
+    return null;
+  }
+}
+
+// Helper function to update requirement isDone status
+async function updatePrdIsDone(folderPath, requirementId, isDone) {
+  try {
+    const prdPath = path.join(folderPath, 'prd.json');
+    const content = await fs.readFile(prdPath, 'utf-8');
+    const prdContent = JSON.parse(content);
+    
+    if (Array.isArray(prdContent)) {
+      const index = prdContent.findIndex(item => item.id === requirementId);
+      if (index !== -1) {
+        prdContent[index].isDone = isDone;
+        await fs.writeFile(prdPath, JSON.stringify(prdContent, null, 2), 'utf-8');
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating requirement isDone:', error);
+    return false;
+  }
+}
+
+// Helper function to get next incomplete requirement
+async function getNextIncompleteRequirement(folderPath) {
+  try {
+    const prdPath = path.join(folderPath, 'prd.json');
+    const content = await fs.readFile(prdPath, 'utf-8');
+    const prdContent = JSON.parse(content);
+    
+    if (Array.isArray(prdContent)) {
+      return prdContent.find(item => item.isDone === false) || null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting next requirement:', error);
+    return null;
+  }
+}
+
+// Build prompt from requirement
+function buildPrompt(requirement) {
+  return `You are an autonomous coding agent. You must complete the following requirement. Make all decisions independently and implement the solution directly dont ask for user opinions or choice.
+  You are provided full permission and access so dont ask any permissions.
+
+## REQUIREMENT
+ID: ${requirement.id}
+Title: ${requirement.title}
+Description: ${requirement.description}
+
+## INSTRUCTIONS
+1. Analyze the requirement thoroughly
+2. Make all necessary decisions autonomously - do NOT ask for clarification or permission
+3. Implement the complete solution
+4. Test your implementation if applicable
+5. When the requirement is fully implemented and working, respond with exactly: <status>done</status>
+
+## RULES
+- Make a step by step plan before proceeding 
+- Never ask questions - make reasonable assumptions and proceed
+- Never wait for user confirmation - act decisively
+- Complete the entire requirement before marking as done
+- Only output <status>done</status> when the implementation is fully complete and verified
+
+Begin implementation now.`;
+}
+
 // IPC handler for executing CLI commands
-ipcMain.handle('executor:run', async (event, prompt, folderPath) => {
+ipcMain.handle('executor:run', async (event, requirementId, folderPath) => {
   try {
     const mainWindow = BrowserWindow.getAllWindows()[0];
     if (!mainWindow) {
@@ -158,6 +312,21 @@ ipcMain.handle('executor:run', async (event, prompt, folderPath) => {
     if (!folderPath) {
       return { success: false, error: 'No folder path provided' };
     }
+
+    // Get requirement from prd.json
+    let requirement;
+    if (requirementId !== null && requirementId !== undefined) {
+      requirement = await getRequirementById(folderPath, requirementId);
+    } else {
+      requirement = await getNextIncompleteRequirement(folderPath);
+    }
+
+    if (!requirement) {
+      return { success: false, error: 'No requirement found' };
+    }
+
+    // Build the prompt from the requirement
+    const prompt = buildPrompt(requirement);
 
     // Get the full path to copilot and shell PATH
     const copilotPath = findCopilotPath();
@@ -173,10 +342,30 @@ ipcMain.handle('executor:run', async (event, prompt, folderPath) => {
       env: { ...process.env, PATH: shellPath }
     });
 
-    // Handle stdout - stream to renderer
-    child.stdout.on('data', (data) => {
+    // Track output buffer for status detection
+    let outputBuffer = '';
+    let hasMarkedDone = false;
+
+    // Handle stdout - stream to renderer and detect status
+    child.stdout.on('data', async (data) => {
       const text = data.toString();
+      outputBuffer += text;
       mainWindow.webContents.send('executor:stdout', text);
+      
+      // Check for <status>done</status> pattern (only process once)
+      if (!hasMarkedDone && outputBuffer.includes('<status>done</status>')) {
+        hasMarkedDone = true;
+        await updatePrdIsDone(folderPath, requirement.id, true);
+        mainWindow.webContents.send('executor:stdout', '\n--- Requirement marked as done ---');
+        
+        // Commit changes to git
+        const commitResult = await commitRequirementChanges(folderPath, requirement);
+        if (commitResult.success) {
+          mainWindow.webContents.send('executor:stdout', `\n--- ${commitResult.message} ---`);
+        } else {
+          mainWindow.webContents.send('executor:stderr', `\n--- Git: ${commitResult.error} ---`);
+        }
+      }
     });
 
     // Handle stderr - stream to renderer
