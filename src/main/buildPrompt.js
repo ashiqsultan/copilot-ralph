@@ -1,5 +1,7 @@
 function buildPrompt(id, title, description = '', progressTxt = '') {
-  if (!id || !title === null) throw 'id and title required'
+  if (id === null || id === undefined) throw 'id  required';
+  if (!title) throw 'title required';
+  
   return `You are an autonomous coding agent. 
   You must complete the following requirement.
 
@@ -32,7 +34,7 @@ After completing each task, append the following details about the task to progr
 Keep entries concise. Sacrifice grammar for the sake of concision. This file helps future iterations skip exploration.
 
 - Only output <status>done</status> when the implementation is fully complete.
-Begin implementation now.`
+Begin implementation now.`;
 }
 
-export default buildPrompt
+export default buildPrompt;
