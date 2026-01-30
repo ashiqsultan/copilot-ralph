@@ -43,6 +43,10 @@ export const useAppStore = create((set, get) => ({
     set((state) => ({
       prdItems: state.prdItems.map((item) => (item.id === id ? { ...item, ...updates } : item))
     })),
+  deletePrdItem: (id) =>
+    set((state) => ({
+      prdItems: state.prdItems.filter((item) => item.id !== id)
+    })),
   clearPrdData: () => set({ hasPrdFile: false, prdItems: [] }),
 
   // Executor setters

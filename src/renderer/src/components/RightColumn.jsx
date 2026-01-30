@@ -7,7 +7,7 @@ const RightColumn = () => {
   const executorStatus = useAppStore((state) => state.executorStatus)
   const statusText = useAppStore((state) => state.statusText)
   const outputLines = useAppStore((state) => state.outputLines)
-  const getNextItem = useAppStore((state) => state.getNextItem)
+  const getPrdItems = useAppStore((state) => state.getPrdItems)
 
   const setIsRunning = useAppStore((state) => state.setIsRunning)
   const setExecutorStatus = useAppStore((state) => state.setExecutorStatus)
@@ -89,27 +89,58 @@ const RightColumn = () => {
     setExecutorStatus('running', 'Running...')
 
     try {
-      // Get the next item to work on
-      const nextItem = getNextItem()
+      // Get all PRD items
+      const allItems = getPrdItems()
 
-      if (nextItem && typeof nextItem === 'object') {
-        appendOutputLine(`Working on: [${nextItem.id}] ${nextItem.title}`, 'stdout')
-        appendOutputLine('---', 'stdout')
-      } else {
-        appendOutputLine('No pending requirements found.', 'stdout')
+      if (!allItems || !Array.isArray(allItems) || allItems.length === 0) {
+        appendOutputLine('No PRD items found.', 'stdout')
         setIsRunning(false)
-        setExecutorStatus('error', 'No requirements')
+        setExecutorStatus('error', 'No items')
         return
       }
 
-      // Start the CLI execution - pass only requirement ID, backend builds the prompt
-      const result = await window.electron.ipcRenderer.invoke('executor:run', nextItem.id, folderPath)
+      // Filter items where isDone is false
+      const pendingItems = allItems.filter((item) => !item.isDone)
 
-      if (!result.success) {
-        appendOutputLine(`Failed to start: ${result.error}`, 'error')
+      if (pendingItems.length === 0) {
+        appendOutputLine('All items are already completed.', 'stdout')
         setIsRunning(false)
-        setExecutorStatus('error', 'Failed to start')
+        setExecutorStatus('completed', 'All done')
+        return
       }
+
+      appendOutputLine(`Found ${pendingItems.length} pending item(s) to process...`, 'stdout')
+      appendOutputLine('---', 'stdout')
+
+      // Loop through each pending item and execute
+      for (const item of pendingItems) {
+        appendOutputLine(`\nWorking on: [${item.id}] ${item.title}`, 'stdout')
+        appendOutputLine('---', 'stdout')
+
+        // Start the CLI execution - pass only requirement ID, backend builds the prompt
+        const result = await window.electron.ipcRenderer.invoke('executor:run', item.id, folderPath)
+
+        if (!result.success) {
+          appendOutputLine(`Failed to start: ${result.error}`, 'error')
+          setIsRunning(false)
+          setExecutorStatus('error', 'Failed to start')
+          return
+        }
+
+        // Wait for the executor to complete before moving to next item
+        // The completion is handled by the 'executor:complete' event listener
+        await new Promise((resolve) => {
+          const checkComplete = window.electron.ipcRenderer.on('executor:complete', () => {
+            if (checkComplete) checkComplete()
+            resolve()
+          })
+        })
+      }
+
+      // All items processed
+      setIsRunning(false)
+      setExecutorStatus('completed', 'All items completed')
+      appendOutputLine('\n--- All pending items have been processed ---', 'success')
     } catch (error) {
       appendOutputLine(`Error: ${error.message}`, 'error')
       setIsRunning(false)
@@ -118,7 +149,7 @@ const RightColumn = () => {
   }, [
     isRunning,
     folderPath,
-    getNextItem,
+    getPrdItems,
     clearOutput,
     setIsRunning,
     setExecutorStatus,

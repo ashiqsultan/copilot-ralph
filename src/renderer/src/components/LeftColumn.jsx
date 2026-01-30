@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../store/appStore'
+import { IconTrash, IconEdit } from '@tabler/icons-react'
+import ConfirmDialog from './ConfirmDialog'
 
 const LeftColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -8,11 +10,14 @@ const LeftColumn = () => {
   const setHasPrdFile = useAppStore((state) => state.setHasPrdFile)
   const setPrdItems = useAppStore((state) => state.setPrdItems)
   const updatePrdItem = useAppStore((state) => state.updatePrdItem)
+  const deletePrdItem = useAppStore((state) => state.deletePrdItem)
 
   const [showForm, setShowForm] = useState(false)
   const [editingItemId, setEditingItemId] = useState(null)
   const [formTitle, setFormTitle] = useState('')
   const [formDescription, setFormDescription] = useState('')
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState(null)
 
   // Check for prd.json file when folder changes
   useEffect(() => {
@@ -22,25 +27,28 @@ const LeftColumn = () => {
   }, [folderPath])
 
   // Check for prd.json file
-  const checkPrdFile = useCallback(async (path) => {
-    if (!path) return
+  const checkPrdFile = useCallback(
+    async (path) => {
+      if (!path) return
 
-    try {
-      const prdContent = await window.electron.ipcRenderer.invoke('fs:readPrdFile', path)
-      if (prdContent) {
-        setHasPrdFile(true)
-        setPrdItems(prdContent)
-        console.log('prd.json content:', prdContent)
-      } else {
+      try {
+        const prdContent = await window.electron.ipcRenderer.invoke('fs:readPrdFile', path)
+        if (prdContent) {
+          setHasPrdFile(true)
+          setPrdItems(prdContent)
+          console.log('prd.json content:', prdContent)
+        } else {
+          setHasPrdFile(false)
+          setPrdItems([])
+        }
+      } catch (error) {
         setHasPrdFile(false)
         setPrdItems([])
+        console.error('Error reading PRD file:', error)
       }
-    } catch (error) {
-      setHasPrdFile(false)
-      setPrdItems([])
-      console.error('Error reading PRD file:', error)
-    }
-  }, [setHasPrdFile, setPrdItems])
+    },
+    [setHasPrdFile, setPrdItems]
+  )
 
   // Create prd.json file
   const createPrdFile = useCallback(async () => {
@@ -94,6 +102,47 @@ const LeftColumn = () => {
     }
   }
 
+  // Handle delete item
+  const handleDeleteItem = (itemId) => {
+    const item = prdItems.find((i) => i.id === itemId)
+    if (item) {
+      setItemToDelete(item)
+      setShowDeleteDialog(true)
+    }
+  }
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (!itemToDelete || !folderPath) return
+
+    const updatedItems = prdItems.filter((item) => item.id !== itemToDelete.id)
+
+    try {
+      const success = await window.electron.ipcRenderer.invoke(
+        'fs:savePrdFile',
+        folderPath,
+        JSON.stringify(updatedItems, null, 2)
+      )
+
+      if (success) {
+        deletePrdItem(itemToDelete.id)
+        setShowDeleteDialog(false)
+        setItemToDelete(null)
+      } else {
+        alert('Failed to delete requirement')
+      }
+    } catch (error) {
+      console.error('Error deleting requirement:', error)
+      alert('Failed to delete requirement')
+    }
+  }
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setShowDeleteDialog(false)
+    setItemToDelete(null)
+  }
+
   // Handle save (Okay button)
   const handleSave = async () => {
     const title = formTitle.trim()
@@ -123,7 +172,8 @@ const LeftColumn = () => {
       }
     } else {
       // Create new item
-      const nextId = updatedItems.length > 0 ? Math.max(...updatedItems.map((item) => item.id)) + 1 : 0
+      const nextId =
+        updatedItems.length > 0 ? Math.max(...updatedItems.map((item) => item.id)) + 1 : 0
 
       const newItem = {
         id: nextId,
@@ -258,28 +308,22 @@ const LeftColumn = () => {
                       <h4 className="font-medium text-gh-text">{item.title}</h4>
                       <p className="text-sm text-gh-text-muted">{item.description}</p>
                     </div>
-                    <button
-                      onClick={() => handleEditItem(item.id)}
-                      className="ml-2 p-2 text-gh-text-muted hover:text-gh-blue hover:bg-gh-blue-focus/10 rounded transition-colors"
-                      title="Edit requirement"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={() => handleEditItem(item.id)}
+                        className="p-2 text-gh-text-muted hover:text-gh-blue hover:bg-gh-blue-focus/10 rounded transition-colors"
+                        title="Edit requirement"
                       >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
-                        <path d="M16 5l3 3" />
-                      </svg>
-                    </button>
+                        <IconEdit size={20} strokeWidth={2} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="p-2 text-gh-text-muted hover:text-gh-red hover:bg-gh-red/10 rounded transition-colors"
+                        title="Delete requirement"
+                      >
+                        <IconTrash size={20} strokeWidth={2} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -287,6 +331,15 @@ const LeftColumn = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        title="Delete Requirement"
+        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.title}"? This action cannot be undone.` : ''}
+      />
     </div>
   )
 }
