@@ -162,7 +162,7 @@ const LeftColumn = () => {
   }
 
   return (
-    <div className="bg-gh-bg p-6 h-full">
+    <div className="bg-gh-bg p-6 h-full flex flex-col">
       <h2 className="text-lg font-semibold mb-3 text-gh-text">Requirement Manager</h2>
 
       {/* No project message (shown when no folder is selected) */}

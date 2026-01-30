@@ -181,7 +181,7 @@ const RightColumn = () => {
         </button>
 
         {/* Status Indicator */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-4">
           <div className={`w-3 h-3 rounded-full ${getStatusDotClass()}`} />
           <span className="text-sm text-gh-text-muted">{statusText}</span>
         </div>
