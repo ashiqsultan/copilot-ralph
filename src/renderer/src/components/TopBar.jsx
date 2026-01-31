@@ -1,12 +1,18 @@
 import { useCallback, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconFolder, IconFolderPlus, IconFolderOpen } from '@tabler/icons-react'
+import {
+  IconFolder,
+  IconFolderPlus,
+  IconFolderOpen,
+  IconBrandGithubCopilot
+} from '@tabler/icons-react'
 
 const TopBar = ({ onFolderChange }) => {
   const folderPath = useAppStore((state) => state.folderPath)
   const setFolderPath = useAppStore((state) => state.setFolderPath)
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [projectName, setProjectName] = useState('')
+  const setIsCopilotSettingsOpen = useAppStore((state) => state.setIsCopilotSettingsOpen)
 
   // Handle open folder button click
   const handleOpenFolder = useCallback(async () => {
@@ -81,11 +87,23 @@ const TopBar = ({ onFolderChange }) => {
     }
   }, [folderPath])
 
+  const onCopilotIconClick = () => {
+    setIsCopilotSettingsOpen(true)
+    console.log("oncopilot buttonclick")
+  }
+
   return (
     <header className="w-full bg-gh-surface border-b border-gh-border text-gh-text p-4">
       <div className="flex items-center justify-between">
         {/* buttons: max 30% */}
         <div className="flex gap-2 w-[20%] min-w-[120px]">
+          <button
+            onClick={onCopilotIconClick}
+            className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
+            title="Copilot Settings"
+          >
+            <IconBrandGithubCopilot color="white" size={18} />
+          </button>
           <button
             onClick={handleOpenFolder}
             className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
@@ -120,9 +138,7 @@ const TopBar = ({ onFolderChange }) => {
                 </button>
               </div>
               {/* Breadcrumb Path */}
-              <div className="text-gh-text-muted font-mono text-xs truncate mt-1">
-                {folderPath}
-              </div>
+              <div className="text-gh-text-muted font-mono text-xs truncate mt-1">{folderPath}</div>
             </>
           ) : (
             <div className="text-gh-text-muted">No folder selected</div>

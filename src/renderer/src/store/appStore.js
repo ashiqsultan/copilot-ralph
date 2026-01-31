@@ -10,6 +10,9 @@ export const useAppStore = create((set, get) => ({
   isRunning: false,
   outputLines: [],
 
+  // Copilot Settings Modal
+  isCopilotSettingsOpen: false,
+
   // Getters
   getFolderPath: () => get().folderPath,
   getHasPrdFile: () => get().hasPrdFile,
@@ -47,6 +50,9 @@ export const useAppStore = create((set, get) => ({
       prdItems: state.prdItems.filter((item) => item.id !== id)
     })),
   clearPrdData: () => set({ hasPrdFile: false, prdItems: [] }),
+
+  // Copilot Settings setters
+  setIsCopilotSettingsOpen: (isOpen) => set({ isCopilotSettingsOpen: isOpen }),
 
   // Executor setters
   setIsRunning: (running) => set({ isRunning: running }),
