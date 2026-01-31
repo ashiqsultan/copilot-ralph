@@ -6,6 +6,11 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   main: {
     build: {
+      rollupOptions: {
+        output: {
+          format: 'es'
+        }
+      },
       outDir: 'dist/main'
     }
   },
