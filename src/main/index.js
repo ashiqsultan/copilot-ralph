@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
+import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient } from './copilot_client'
 
 function createWindow() {
   // Create the browser window.
@@ -15,7 +16,7 @@ function createWindow() {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.cjs'),
       sandbox: false
     }
   })
@@ -68,6 +69,9 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  // Clean up Copilot client on quit
+  cleanupCopilotClient()
+  
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -176,4 +180,30 @@ ipcMain.handle('executor:isRunning', async () => {
 // IPC handler for getting current process info (for debugging)
 ipcMain.handle('executor:getProcessInfo', async () => {
   return getCurrentProcessInfo()
+})
+
+// IPC handler for checking Copilot login status
+ipcMain.handle('check-copilot-login', async () => {
+  return checkCopilotStatus()
+})
+
+// IPC handler for getting Copilot CLI path
+ipcMain.handle('select-copilot-path', async () => {
+  const copilotPath = getCopilotPath()
+  return copilotPath && copilotPath !== 'copilot' ? copilotPath : null
+})
+
+// IPC handler for saving Copilot path (for future persistence)
+ipcMain.handle('save-copilot-path', async (event, customPath) => {
+  // For now, just validate the path exists
+  // In the future, you could save this to app settings/config
+  try {
+    const stats = await fs.stat(customPath)
+    if (stats.isFile()) {
+      return { success: true, message: 'Path validated successfully' }
+    }
+    return { success: false, message: 'Path is not a valid file' }
+  } catch (error) {
+    return { success: false, message: `Path validation failed: ${error.message}` }
+  }
 })
