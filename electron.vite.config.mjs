@@ -1,17 +1,28 @@
-import { resolve } from 'path'
-import { defineConfig } from 'electron-vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { resolve } from 'path';
+import { defineConfig } from 'electron-vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  main: {},
-  preload: {},
+  main: {
+    build: {
+      outDir: 'dist/main'
+    }
+  },
+  preload: {
+    build: {
+      outDir: 'dist/preload'
+    }
+  },
   renderer: {
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src')
       }
     },
-    plugins: [react(), tailwindcss()]
+    plugins: [react(), tailwindcss()],
+    build: {
+      outDir: 'dist/renderer'
+    }
   }
-})
+});
