@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconFolder, IconFolderPlus } from '@tabler/icons-react'
+import { IconFolder, IconFolderPlus, IconFolderOpen } from '@tabler/icons-react'
 
 const TopBar = ({ onFolderChange }) => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -70,35 +70,64 @@ const TopBar = ({ onFolderChange }) => {
     setProjectName('')
   }, [])
 
+  // Handle opening folder in explorer
+  const handleOpenInExplorer = useCallback(async () => {
+    if (folderPath) {
+      try {
+        await window.electron.ipcRenderer.invoke('dialog:openInExplorer', folderPath)
+      } catch (error) {
+        console.error('Error opening folder in explorer:', error)
+      }
+    }
+  }, [folderPath])
+
   return (
     <header className="w-full bg-gh-surface border-b border-gh-border text-gh-text p-4">
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+        {/* buttons: max 30% */}
+        <div className="flex gap-2 w-[20%] min-w-[120px]">
           <button
             onClick={handleOpenFolder}
-            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold py-2 px-4 rounded-md transition-colors flex items-center gap-2"
+            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
           >
-            <IconFolder color="white" size={20} />
+            <IconFolder color="white" size={18} />
             Open Folder
           </button>
           <button
             onClick={handleNewProject}
-            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold py-2 px-4 rounded-md transition-colors flex items-center gap-2"
+            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
           >
-            <IconFolderPlus color="white" size={20} />
+            <IconFolderPlus color="white" size={18} />
             New Project
           </button>
         </div>
 
-        <div
-          className={`flex-1 text-center mx-4 font-mono text-sm ${
-            folderPath ? 'text-white' : 'text-gh-text-muted'
-          }`}
-        >
-          {folderPath || 'No folder selected'}
+        {/* folder path: 70% with truncation */}
+        <div className="w-[80%] text-center mx-4 min-w-0">
+          {folderPath ? (
+            <>
+              {/* Project Name (last folder) with open icon */}
+              <div className="flex items-center justify-center gap-2">
+                <div className="text-white font-semibold text-base truncate">
+                  {folderPath.split('/').filter(Boolean).pop()}
+                </div>
+                <button
+                  onClick={handleOpenInExplorer}
+                  className="flex-shrink-0 text-gh-text-muted hover:text-gh-green transition-colors"
+                  title="Open in explorer"
+                >
+                  <IconFolderOpen size={18} />
+                </button>
+              </div>
+              {/* Breadcrumb Path */}
+              <div className="text-gh-text-muted font-mono text-xs truncate mt-1">
+                {folderPath}
+              </div>
+            </>
+          ) : (
+            <div className="text-gh-text-muted">No folder selected</div>
+          )}
         </div>
-
-        <div className="w-32"></div>
       </div>
 
       {/* New Project Dialog */}
@@ -107,9 +136,7 @@ const TopBar = ({ onFolderChange }) => {
           <div className="bg-gh-surface border border-gh-border rounded-lg p-6 w-96">
             <h2 className="text-xl font-semibold mb-4 text-white">Create New Project</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 text-gh-text">
-                Project Name
-              </label>
+              <label className="block text-sm font-medium mb-2 text-gh-text">Project Name</label>
               <input
                 type="text"
                 value={projectName}
