@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useAppStore } from '../store/appStore'
 import RequirementsList from './RequirementsList'
+import Intro from './Intro'
 
 const LeftColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -66,14 +67,8 @@ const LeftColumn = () => {
 
   return (
     <div className="bg-gh-bg p-6 h-full flex flex-col">
-      <h2 className="text-lg font-semibold mb-3 text-gh-text">Requirement Manager</h2>
-
       {/* No project message (shown when no folder is selected) */}
-      {!folderPath && (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gh-text-muted text-lg italic">No project selected</p>
-        </div>
-      )}
+      {!folderPath && <Intro />}
 
       {/* Create PRD button (shown when folder selected but no prd.json exists) */}
       {folderPath && !hasPrdFile && (
