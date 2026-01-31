@@ -98,13 +98,14 @@ const TopBar = ({ onFolderChange }) => {
       <div className="flex items-center justify-between">
         {/* buttons: max 30% */}
         <div className="flex gap-2 w-[20%] min-w-[120px]">
-          <button
-            onClick={onCopilotIconClick}
-            className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
-            title="Copilot Settings"
-          >
-            <IconBrandGithubCopilot color="white" size={18} />
-          </button>
+          <Tooltip text="Config" position="bottom">
+            <button
+              onClick={onCopilotIconClick}
+              className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
+            >
+              <IconBrandGithubCopilot color="white" size={18} />
+            </button>
+          </Tooltip>
           <Tooltip text="Open an existing folder" position="bottom">
             <button
               onClick={handleOpenFolder}
