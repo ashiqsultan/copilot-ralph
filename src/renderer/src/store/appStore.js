@@ -8,8 +8,6 @@ export const useAppStore = create((set, get) => ({
 
   // Executor state
   isRunning: false,
-  executorStatus: 'idle', // 'idle' | 'running' | 'completed' | 'error'
-  statusText: 'Idle',
   outputLines: [],
 
   // Getters
@@ -23,6 +21,7 @@ export const useAppStore = create((set, get) => ({
     }
     return null
   },
+  getStatusText: () => get().statusText,
 
   // Setters
   setFolderPath: (path) => set({ folderPath: path }),
@@ -51,7 +50,6 @@ export const useAppStore = create((set, get) => ({
 
   // Executor setters
   setIsRunning: (running) => set({ isRunning: running }),
-  setExecutorStatus: (status, text) => set({ executorStatus: status, statusText: text }),
   appendOutputLine: (text, type = 'stdout') =>
     set((state) => ({
       outputLines: [...state.outputLines, { text, type, id: Date.now() + Math.random() }]
@@ -60,8 +58,8 @@ export const useAppStore = create((set, get) => ({
   resetExecutor: () =>
     set({
       isRunning: false,
-      executorStatus: 'idle',
-      statusText: 'Idle',
+     
+      
       outputLines: []
     })
 }))

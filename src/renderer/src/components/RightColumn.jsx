@@ -7,9 +7,7 @@ const RightColumn = () => {
   const isRunning = useAppStore((state) => state.isRunning)
   const outputLines = useAppStore((state) => state.outputLines)
   const getPrdItems = useAppStore((state) => state.getPrdItems)
-
   const setIsRunning = useAppStore((state) => state.setIsRunning)
-  const setExecutorStatus = useAppStore((state) => state.setExecutorStatus)
   const appendOutputLine = useAppStore((state) => state.appendOutputLine)
   const clearOutput = useAppStore((state) => state.clearOutput)
 
@@ -38,7 +36,13 @@ const RightColumn = () => {
     const removeCompleteListener = window.electron.ipcRenderer.on(
       'executor:complete',
       (_, result) => {
-        handleExecutionComplete(result)
+        if (result.code === 0) {
+          appendOutputLine('\n--- Execution completed successfully ---', 'success')
+        } else if (result.signal) {
+          appendOutputLine(`\n--- Process terminated by signal: ${result.signal} ---`, 'error')
+        } else {
+          appendOutputLine(`\n--- Execution failed with code: ${result.code} ---`, 'error')
+        }
       }
     )
 
@@ -50,23 +54,6 @@ const RightColumn = () => {
     }
   }, [])
 
-  // Handle execution completion
-  const handleExecutionComplete = useCallback(
-    (result) => {
-      if (result.code === 0) {
-        setExecutorStatus('completed', 'Completed')
-        appendOutputLine('\n--- Execution completed successfully ---', 'success')
-      } else if (result.signal) {
-        setExecutorStatus('error', 'Terminated')
-        appendOutputLine(`\n--- Process terminated by signal: ${result.signal} ---`, 'error')
-      } else {
-        setExecutorStatus('error', `Exit code: ${result.code}`)
-        appendOutputLine(`\n--- Execution failed with code: ${result.code} ---`, 'error')
-      }
-    },
-    [setExecutorStatus, appendOutputLine]
-  )
-
   // Handle start button click
   const handleStartClick = useCallback(async () => {
     if (isRunning) {
@@ -77,7 +64,6 @@ const RightColumn = () => {
     // Check if folder is selected
     if (!folderPath) {
       appendOutputLine('Error: No folder selected. Please select a folder first.', 'error')
-      setExecutorStatus('error', 'No folder selected')
       return
     }
 
@@ -86,7 +72,6 @@ const RightColumn = () => {
 
     // Update UI state
     setIsRunning(true)
-    setExecutorStatus('running', 'Running...')
 
     try {
       // Get all PRD items
@@ -95,7 +80,6 @@ const RightColumn = () => {
       if (!allItems || !Array.isArray(allItems) || allItems.length === 0) {
         appendOutputLine('No PRD items found.', 'stdout')
         setIsRunning(false)
-        setExecutorStatus('error', 'No items')
         return
       }
 
@@ -105,7 +89,6 @@ const RightColumn = () => {
       if (pendingItems.length === 0) {
         appendOutputLine('All items are already completed.', 'stdout')
         setIsRunning(false)
-        setExecutorStatus('completed', 'All done')
         return
       }
 
@@ -123,8 +106,9 @@ const RightColumn = () => {
           break
         }
 
+        appendOutputLine('=== Starting new task ===', 'stdout')
         appendOutputLine(`\nWorking on: [${item.id}] ${item.title}`, 'stdout')
-        appendOutputLine('---', 'stdout')
+        appendOutputLine('-----', 'stdout')
 
         // Start the CLI execution - pass only requirement ID, backend builds the prompt
         const result = await window.electron.ipcRenderer.invoke('executor:run', item.id, folderPath)
@@ -132,7 +116,6 @@ const RightColumn = () => {
         if (!result.success) {
           appendOutputLine(`Failed to start: ${result.error}`, 'error')
           setIsRunning(false)
-          setExecutorStatus('error', 'Failed to start')
           return
         }
 
@@ -149,7 +132,6 @@ const RightColumn = () => {
         if (completionResult.aborted || completionResult.signal === 'SIGTERM') {
           wasAborted = true
           setIsRunning(false)
-          setExecutorStatus('error', 'Aborted')
           return
         }
       }
@@ -157,23 +139,14 @@ const RightColumn = () => {
       // All items processed
       if (!wasAborted) {
         setIsRunning(false)
-        setExecutorStatus('completed', 'All items completed')
+
         appendOutputLine('\n--- All pending items have been processed ---', 'success')
       }
     } catch (error) {
       appendOutputLine(`Error: ${error.message}`, 'error')
       setIsRunning(false)
-      setExecutorStatus('error', 'Error')
     }
-  }, [
-    isRunning,
-    folderPath,
-    getPrdItems,
-    clearOutput,
-    setIsRunning,
-    setExecutorStatus,
-    appendOutputLine
-  ])
+  }, [isRunning, folderPath, getPrdItems, clearOutput, setIsRunning, appendOutputLine])
 
   const handleAbortClick = async () => {
     // if (!isRunning) {
@@ -183,7 +156,6 @@ const RightColumn = () => {
 
     try {
       const result = await window.electron.ipcRenderer.invoke('executor:abort')
-
       if (result.success) {
         appendOutputLine('\n--- Abort initiated ---', 'stdout')
       } else {
