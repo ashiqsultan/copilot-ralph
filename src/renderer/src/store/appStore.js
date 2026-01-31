@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 export const useAppStore = create((set, get) => ({
   // State
@@ -15,11 +15,11 @@ export const useAppStore = create((set, get) => ({
   getHasPrdFile: () => get().hasPrdFile,
   getPrdItems: () => get().prdItems,
   getNextItem: () => {
-    const items = get().prdItems
+    const items = get().prdItems;
     if (Array.isArray(items)) {
-      return items.find((item) => !item.isDone) || null
+      return items.find((item) => !item.isDone) || null;
     }
-    return null
+    return null;
   },
   getStatusText: () => get().statusText,
 
@@ -30,11 +30,11 @@ export const useAppStore = create((set, get) => ({
   setPrdItems: (items) => {
     // Handle both array and single object (legacy format)
     if (Array.isArray(items)) {
-      set({ prdItems: items })
+      set({ prdItems: items });
     } else if (items && typeof items === 'object') {
-      set({ prdItems: [items] })
+      set({ prdItems: [items] });
     } else {
-      set({ prdItems: [] })
+      set({ prdItems: [] });
     }
   },
   addPrdItem: (item) => set((state) => ({ prdItems: [...state.prdItems, item] })),
@@ -58,8 +58,7 @@ export const useAppStore = create((set, get) => ({
   resetExecutor: () =>
     set({
       isRunning: false,
-     
-      
+
       outputLines: []
     })
-}))
+}));
