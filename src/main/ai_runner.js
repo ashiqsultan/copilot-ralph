@@ -7,6 +7,9 @@ import { getShellPath } from './helpers/getShellpath'
 import { findGitPath } from './helpers/getGitPath'
 import buildPrompt from './buildPrompt'
 
+// Module-level variable to track the current running process
+let currentProcess = null
+
 // Helper function to commit changes after requirement completion
 async function commitRequirementChanges(folderPath, requirement) {
   const gitPath = findGitPath()
@@ -132,6 +135,7 @@ export async function executeCommand(requirementId, folderPath) {
       return { success: false, error: 'No requirement found' }
     }
 
+    // TODO: Remove comment
     console.log("requirement",requirement)
 
     const prompt = buildPrompt(requirement.id, requirement.title, requirement.description)
@@ -145,6 +149,14 @@ export async function executeCommand(requirementId, folderPath) {
       cwd: folderPath,
       env: { ...process.env, PATH: shellPath }
     })
+
+    // Store the current process for potential abort
+    currentProcess = {
+      child,
+      requirementId: requirement.id,
+      folderPath,
+      startTime: Date.now()
+    }
 
     let outputBuffer = ''
     let hasMarkedDone = false
@@ -174,10 +186,18 @@ export async function executeCommand(requirementId, folderPath) {
     })
 
     child.on('close', (code, signal) => {
+      // Clear the current process reference
+      if (currentProcess && currentProcess.child === child) {
+        currentProcess = null
+      }
       mainWindow.webContents.send('executor:complete', { code, signal })
     })
 
     child.on('error', (error) => {
+      // Clear the current process reference on error
+      if (currentProcess && currentProcess.child === child) {
+        currentProcess = null
+      }
       mainWindow.webContents.send('executor:stderr', `Spawn error: ${error.message}`)
       mainWindow.webContents.send('executor:complete', { code: 1, error: error.message })
     })
@@ -185,6 +205,79 @@ export async function executeCommand(requirementId, folderPath) {
     return { success: true }
   } catch (error) {
     console.error('Error executing command:', error)
+    // Clear the current process reference on exception
+    currentProcess = null
     return { success: false, error: error.message }
+  }
+}
+
+// Function to abort the currently running process
+export function abortCurrentProcess() {
+  try {
+    if (!currentProcess) {
+      console.log('No process to abort')
+      return { success: false, error: 'No process is currently running' }
+    }
+
+    const { child, requirementId } = currentProcess
+    
+    if (!child || child.killed) {
+      currentProcess = null
+      return { success: false, error: 'Process already terminated' }
+    }
+
+    console.log(`Aborting process for requirement ${requirementId}...`)
+    
+    // Get main window for sending messages
+    const mainWindow = BrowserWindow.getAllWindows()[0]
+    
+    // Try graceful termination first (SIGTERM)
+    const killed = child.kill('SIGTERM')
+    
+    if (!killed) {
+      // If SIGTERM failed, force kill with SIGKILL
+      child.kill('SIGKILL')
+    }
+    
+    // Notify frontend about abort
+    if (mainWindow) {
+      mainWindow.webContents.send('executor:stdout', '\n\n--- Process aborted by user ---\n')
+      mainWindow.webContents.send('executor:complete', { 
+        code: -1, 
+        signal: 'SIGTERM',
+        aborted: true 
+      })
+    }
+    
+    // Clear the reference
+    currentProcess = null
+    
+    console.log('Process aborted successfully')
+    return { success: true, message: 'Process aborted successfully' }
+    
+  } catch (error) {
+    console.error('Error aborting process:', error)
+    currentProcess = null
+    return { success: false, error: error.message }
+  }
+}
+
+// Function to check if a process is currently running
+export function isProcessRunning() {
+  return currentProcess !== null && currentProcess.child && !currentProcess.child.killed
+}
+
+// Function to get current process info (for debugging/status)
+export function getCurrentProcessInfo() {
+  if (!currentProcess) {
+    return null
+  }
+  
+  return {
+    requirementId: currentProcess.requirementId,
+    folderPath: currentProcess.folderPath,
+    startTime: currentProcess.startTime,
+    running: !currentProcess.child.killed,
+    pid: currentProcess.child.pid
   }
 }

@@ -1,11 +1,10 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
+import { IconPlayerPlayFilled, IconCancel } from '@tabler/icons-react'
 
 const RightColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
   const isRunning = useAppStore((state) => state.isRunning)
-  const executorStatus = useAppStore((state) => state.executorStatus)
-  const statusText = useAppStore((state) => state.statusText)
   const outputLines = useAppStore((state) => state.outputLines)
   const getPrdItems = useAppStore((state) => state.getPrdItems)
 
@@ -54,8 +53,6 @@ const RightColumn = () => {
   // Handle execution completion
   const handleExecutionComplete = useCallback(
     (result) => {
-      setIsRunning(false)
-
       if (result.code === 0) {
         setExecutorStatus('completed', 'Completed')
         appendOutputLine('\n--- Execution completed successfully ---', 'success')
@@ -67,7 +64,7 @@ const RightColumn = () => {
         appendOutputLine(`\n--- Execution failed with code: ${result.code} ---`, 'error')
       }
     },
-    [setIsRunning, setExecutorStatus, appendOutputLine]
+    [setExecutorStatus, appendOutputLine]
   )
 
   // Handle start button click
@@ -115,8 +112,17 @@ const RightColumn = () => {
       appendOutputLine(`Found ${pendingItems.length} pending item(s) to process...`, 'stdout')
       appendOutputLine('---', 'stdout')
 
+      // Track if execution was aborted
+      let wasAborted = false
+
       // Loop through each pending item and execute
       for (const item of pendingItems) {
+        // Check if we should stop due to abort
+        if (wasAborted) {
+          appendOutputLine('\n--- Remaining items skipped due to abort ---', 'stdout')
+          break
+        }
+
         appendOutputLine(`\nWorking on: [${item.id}] ${item.title}`, 'stdout')
         appendOutputLine('---', 'stdout')
 
@@ -132,18 +138,28 @@ const RightColumn = () => {
 
         // Wait for the executor to complete before moving to next item
         // The completion is handled by the 'executor:complete' event listener
-        await new Promise((resolve) => {
-          const checkComplete = window.electron.ipcRenderer.on('executor:complete', () => {
+        const completionResult = await new Promise((resolve) => {
+          const checkComplete = window.electron.ipcRenderer.on('executor:complete', (_, result) => {
             if (checkComplete) checkComplete()
-            resolve()
+            resolve(result)
           })
         })
+
+        // Check if the process was aborted
+        if (completionResult.aborted || completionResult.signal === 'SIGTERM') {
+          wasAborted = true
+          setIsRunning(false)
+          setExecutorStatus('error', 'Aborted')
+          return
+        }
       }
 
       // All items processed
-      setIsRunning(false)
-      setExecutorStatus('completed', 'All items completed')
-      appendOutputLine('\n--- All pending items have been processed ---', 'success')
+      if (!wasAborted) {
+        setIsRunning(false)
+        setExecutorStatus('completed', 'All items completed')
+        appendOutputLine('\n--- All pending items have been processed ---', 'success')
+      }
     } catch (error) {
       appendOutputLine(`Error: ${error.message}`, 'error')
       setIsRunning(false)
@@ -159,18 +175,28 @@ const RightColumn = () => {
     appendOutputLine
   ])
 
-  // Get status dot color class based on status
-  const getStatusDotClass = () => {
-    switch (executorStatus) {
-      case 'running':
-        return 'bg-gh-yellow animate-pulse'
-      case 'completed':
-        return 'bg-gh-green-bright'
-      case 'error':
-        return 'bg-gh-red'
-      default:
-        return 'bg-gh-text-subtle'
+  const handleAbortClick = async () => {
+    // if (!isRunning) {
+    //   console.log('No process to abort')
+    //   return
+    // }
+
+    try {
+      const result = await window.electron.ipcRenderer.invoke('executor:abort')
+
+      if (result.success) {
+        appendOutputLine('\n--- Abort initiated ---', 'stdout')
+      } else {
+        appendOutputLine(`\n--- Abort failed: ${result.error} ---`, 'error')
+      }
+    } catch (error) {
+      appendOutputLine(`\n--- Error aborting: ${error.message} ---`, 'error')
     }
+  }
+
+  // Get status dot color class based on status
+  const getStatusDotClass = (isRunning) => {
+    return isRunning ? 'bg-gh-yellow animate-pulse' : 'bg-gh-text-subtle'
   }
 
   // Get output line color class based on type
@@ -191,31 +217,36 @@ const RightColumn = () => {
     <div className="bg-gh-bg p-6 h-full flex flex-col border-l border-gh-border">
       {/* Header with button and status */}
       <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={handleStartClick}
-          disabled={isRunning}
-          className={`flex items-center gap-2 bg-gh-green text-white px-4 py-2 rounded-md transition-colors ${
-            isRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
-          }`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="icon icon-tabler icons-tabler-filled icon-tabler-player-play"
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleStartClick}
+            disabled={isRunning}
+            className={`flex items-center gap-1 bg-gh-green text-white px-3 py-1.5 rounded-md text-sm transition-colors ${
+              isRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
+            }`}
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" />
-          </svg>
-          Start
-        </button>
+            <IconPlayerPlayFilled size={18} strokeWidth={2} />
+            Start
+          </button>
+
+          <button
+            onClick={handleAbortClick}
+            disabled={!isRunning}
+            className={`flex items-center gap-1 border border-gh-red text-gh-red px-3 py-1.5 rounded-md text-sm transition-colors duration-150 ease-in-out ${
+              isRunning
+                ? 'hover:bg-gh-red hover:text-white hover:border-gh-red'
+                : 'opacity-50 cursor-not-allowed'
+            }`}
+          >
+            <IconCancel size={18} strokeWidth={2} />
+            Abort
+          </button>
+        </div>
 
         {/* Status Indicator */}
         <div className="flex items-center gap-2 pl-4">
-          <div className={`w-3 h-3 rounded-full ${getStatusDotClass()}`} />
-          <span className="text-sm text-gh-text-muted">{statusText}</span>
+          <div className={`w-3 h-3 rounded-full ${getStatusDotClass(isRunning)}`} />
+          <span className="text-sm text-gh-text-muted">{isRunning ? 'Running' : 'Idle'}</span>
         </div>
       </div>
 

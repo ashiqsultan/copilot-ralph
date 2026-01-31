@@ -24,6 +24,7 @@ ${progressTxt}
 - Do NOT ask for user opinions or choice.
 - Never wait for user confirmation - act decisively
 - Never ask further questions  - make reasonable assumptions and proceed
+- Never read folders like node_modules or .venv or any big folders that is typically git ignored
 
 ## Progress Tracking
 After completing each task, append the following details about the task to progress.txt

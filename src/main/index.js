@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { executeCommand } from './ai_runner'
+import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
 
 function createWindow() {
   // Create the browser window.
@@ -113,6 +113,16 @@ ipcMain.handle('dialog:createNewProject', async (event, projectName) => {
   }
 })
 
+// IPC handler for opening folder in explorer (cross-platform)
+ipcMain.handle('dialog:openInExplorer', async (event, folderPath) => {
+  try {
+    await shell.openPath(folderPath)
+  } catch (error) {
+    console.error('Error opening folder in explorer:', error)
+    throw error
+  }
+})
+
 // IPC handler for reading prd.json file
 ipcMain.handle('fs:readPrdFile', async (event, folderPath) => {
   try {
@@ -151,4 +161,19 @@ ipcMain.handle('fs:savePrdFile', async (event, folderPath, content) => {
 // IPC handler for executing CLI commands
 ipcMain.handle('executor:run', async (event, requirementId, folderPath) => {
   return executeCommand(requirementId, folderPath)
+})
+
+// IPC handler for aborting the current running process
+ipcMain.handle('executor:abort', async () => {
+  return abortCurrentProcess()
+})
+
+// IPC handler for checking if a process is currently running
+ipcMain.handle('executor:isRunning', async () => {
+  return isProcessRunning()
+})
+
+// IPC handler for getting current process info (for debugging)
+ipcMain.handle('executor:getProcessInfo', async () => {
+  return getCurrentProcessInfo()
 })
