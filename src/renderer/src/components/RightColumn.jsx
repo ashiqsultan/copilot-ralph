@@ -36,9 +36,12 @@ const RightColumn = () => {
     })
 
     // Listen for completion
-    const removeCompleteListener = window.electron.ipcRenderer.on('executor:complete', (_, result) => {
-      handleExecutionComplete(result)
-    })
+    const removeCompleteListener = window.electron.ipcRenderer.on(
+      'executor:complete',
+      (_, result) => {
+        handleExecutionComplete(result)
+      }
+    )
 
     // Cleanup listeners on unmount
     return () => {
@@ -192,9 +195,7 @@ const RightColumn = () => {
           onClick={handleStartClick}
           disabled={isRunning}
           className={`flex items-center gap-2 bg-gh-green text-white px-4 py-2 rounded-md transition-colors ${
-            isRunning
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-gh-green-hover'
+            isRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
           }`}
         >
           <svg
