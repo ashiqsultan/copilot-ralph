@@ -6,6 +6,7 @@ import {
   IconFolderOpen,
   IconBrandGithubCopilot
 } from '@tabler/icons-react'
+import Tooltip from './Tooltip'
 
 const TopBar = ({ onFolderChange }) => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -104,20 +105,24 @@ const TopBar = ({ onFolderChange }) => {
           >
             <IconBrandGithubCopilot color="white" size={18} />
           </button>
-          <button
-            onClick={handleOpenFolder}
-            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-          >
-            <IconFolder color="white" size={18} />
-            Open Folder
-          </button>
-          <button
-            onClick={handleNewProject}
-            className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-          >
-            <IconFolderPlus color="white" size={18} />
-            New Project
-          </button>
+          <Tooltip text="Open an existing folder" position="bottom">
+            <button
+              onClick={handleOpenFolder}
+              className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
+            >
+              <IconFolder color="white" size={18} />
+              Open
+            </button>
+          </Tooltip>
+          <Tooltip text="Create a new project" position="bottom">
+            <button
+              onClick={handleNewProject}
+              className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
+            >
+              <IconFolderPlus color="white" size={18} />
+              New
+            </button>
+          </Tooltip>
         </div>
 
         {/* folder path: 70% with truncation */}
