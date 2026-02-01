@@ -4,9 +4,9 @@ import {
   IconFolder,
   IconFolderPlus,
   IconFolderOpen,
-  IconBrandGithubCopilot,
   IconSettings
 } from '@tabler/icons-react'
+import Logo from './Logo'
 import Tooltip from './Tooltip'
 
 const TopBar = ({ onFolderChange }) => {
@@ -96,71 +96,63 @@ const TopBar = ({ onFolderChange }) => {
 
   return (
     <header className="w-full bg-gh-surface border-b border-gh-border text-gh-text p-4">
-      <div className="flex items-center justify-between">
-        {/* buttons: max 30% */}
-        <div className="flex gap-2 w-[20%] min-w-[120px]">
-          {/* <Tooltip text="Config" position="bottom">
-            <button
-              onClick={onCopilotIconClick}
-              className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
-            >
-              <IconBrandGithubCopilot color="white" size={18} />
-              <IconSettings color="white" size={18} />
-            </button>
-          </Tooltip> */}
-          <Tooltip text="Open an existing folder" position="bottom">
-            <button
-              onClick={handleOpenFolder}
-              className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-            >
-              <IconFolder color="white" size={18} />
-              Open
-            </button>
-          </Tooltip>
-          <Tooltip text="Create a new project" position="bottom">
-            <button
-              onClick={handleNewProject}
-              className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-            >
-              <IconFolderPlus color="white" size={18} />
-              New
-            </button>
-          </Tooltip>
-        </div>
-
-        {/* folder path: 70% with truncation */}
-        <div className="w-[70%] text-center mx-4 min-w-0">
-          {folderPath ? (
-            <>
-              {/* Project Name (last folder) with open icon */}
-              <div className="flex items-center justify-center gap-2">
-                <div className="text-white font-semibold text-base truncate">
-                  {folderPath.split('/').filter(Boolean).pop()}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 w-full min-w-0">
+          <div className="flex-shrink-0">
+            <Logo />
+          </div>
+          {/* buttons: max 30% */}
+          <div className="flex gap-2 w-[20%] min-w-[120px]">
+            <Tooltip text="Open an existing folder" position="bottom">
+              <button
+                onClick={handleOpenFolder}
+                className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
+              >
+                <IconFolder color="white" size={18} />
+                Open
+              </button>
+            </Tooltip>
+            <Tooltip text="Create a new project" position="bottom">
+              <button
+                onClick={handleNewProject}
+                className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
+              >
+                <IconFolderPlus color="white" size={18} />
+                New
+              </button>
+            </Tooltip>
+          </div>
+          {/* folder path: 70% with truncation */}
+          <div className="flex-1 text-center mx-4 min-w-0">
+            {folderPath ? (
+              <>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="text-white font-semibold text-base truncate">
+                    {folderPath.split('/').filter(Boolean).pop()}
+                  </div>
+                  <button
+                    onClick={handleOpenInExplorer}
+                    className="flex-shrink-0 text-gh-text-muted hover:text-gh-green transition-colors"
+                    title="Open in explorer"
+                  >
+                    <IconFolderOpen size={18} />
+                  </button>
                 </div>
-                <button
-                  onClick={handleOpenInExplorer}
-                  className="flex-shrink-0 text-gh-text-muted hover:text-gh-green transition-colors"
-                  title="Open in explorer"
-                >
-                  <IconFolderOpen size={18} />
-                </button>
-              </div>
-              {/* Breadcrumb Path */}
-              <div className="text-gh-text-muted font-mono text-xs truncate mt-1">{folderPath}</div>
-            </>
-          ) : (
-            <div className="text-gh-text-muted">No folder selected</div>
-          )}
+                <div className="text-gh-text-muted font-mono text-xs truncate mt-1">{folderPath}</div>
+              </>
+            ) : (
+              <div className="text-gh-text-muted">No folder selected</div>
+            )}
+          </div>
         </div>
 
         <div className="w-[10%] text-center">
           <Tooltip text="Settings" position="bottom">
             <button
               onClick={onCopilotIconClick}
-              className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
+              className="hover:bg-gh-border text-white font-semibold px-2 py-1 rounded-md transition-colors flex items-center gap-1 text-sm"
             >
-              {/* <IconBrandGithubCopilot color="white" size={18} /> */}
-              <IconSettings color="white" size={18} />
+              <IconSettings color="white" size={20} />
             </button>
           </Tooltip>
         </div>
