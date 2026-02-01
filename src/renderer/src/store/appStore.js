@@ -9,6 +9,7 @@ export const useAppStore = create((set, get) => ({
   // Executor state
   isRunning: false,
   outputLines: [],
+  workingItemId: null,
 
   // Copilot Settings Modal
   isCopilotSettingsOpen: false,
@@ -56,6 +57,7 @@ export const useAppStore = create((set, get) => ({
 
   // Executor setters
   setIsRunning: (running) => set({ isRunning: running }),
+  setWorkingItemId: (id) => set({ workingItemId: id }),
   appendOutputLine: (text, type = 'stdout') =>
     set((state) => ({
       outputLines: [...state.outputLines, { text, type, id: Date.now() + Math.random() }]
@@ -64,7 +66,7 @@ export const useAppStore = create((set, get) => ({
   resetExecutor: () =>
     set({
       isRunning: false,
-
+      workingItemId: null,
       outputLines: []
     })
 }));

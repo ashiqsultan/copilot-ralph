@@ -9,6 +9,7 @@ const RightColumn = () => {
   const outputLines = useAppStore((state) => state.outputLines)
   const getPrdItems = useAppStore((state) => state.getPrdItems)
   const setIsRunning = useAppStore((state) => state.setIsRunning)
+  const setWorkingItemId = useAppStore((state) => state.setWorkingItemId)
   const appendOutputLine = useAppStore((state) => state.appendOutputLine)
   const clearOutput = useAppStore((state) => state.clearOutput)
 
@@ -107,6 +108,9 @@ const RightColumn = () => {
           break
         }
 
+        // Set the current working item
+        setWorkingItemId(item.id)
+
         appendOutputLine('=== Starting new task ===', 'stdout')
         appendOutputLine(`\nWorking on: [${item.id}] ${item.title}`, 'stdout')
         appendOutputLine('-----', 'stdout')
@@ -132,6 +136,7 @@ const RightColumn = () => {
         // Check if the process was aborted
         if (completionResult.aborted || completionResult.signal === 'SIGTERM') {
           wasAborted = true
+          setWorkingItemId(null)
           setIsRunning(false)
           return
         }
@@ -139,26 +144,24 @@ const RightColumn = () => {
 
       // All items processed
       if (!wasAborted) {
+        setWorkingItemId(null)
         setIsRunning(false)
 
         appendOutputLine('\n--- All pending items have been processed ---', 'success')
       }
     } catch (error) {
       appendOutputLine(`Error: ${error.message}`, 'error')
+      setWorkingItemId(null)
       setIsRunning(false)
     }
-  }, [isRunning, folderPath, getPrdItems, clearOutput, setIsRunning, appendOutputLine])
+  }, [isRunning, folderPath, getPrdItems, clearOutput, setIsRunning, setWorkingItemId, appendOutputLine])
 
   const handleAbortClick = async () => {
-    // if (!isRunning) {
-    //   console.log('No process to abort')
-    //   return
-    // }
-
     try {
       const result = await window.electron.ipcRenderer.invoke('executor:abort')
       if (result.success) {
         appendOutputLine('\n--- Abort initiated ---', 'stdout')
+        setWorkingItemId(null)
       } else {
         appendOutputLine(`\n--- Abort failed: ${result.error} ---`, 'error')
       }

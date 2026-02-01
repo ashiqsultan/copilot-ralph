@@ -3,11 +3,34 @@ import { useAppStore } from '../store/appStore'
 import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
 
+const StatusIcon = ({ isDone, isItemWorking }) => {
+  if (isItemWorking) {
+    return (
+      <IconCircleDashed size={20} strokeWidth={2} className="text-amber-500 animate-spin-slow" title="In Progress" />
+    )
+  }
+  return (
+    <>
+      {isDone ? (
+        <IconCircleCheck size={20} strokeWidth={2} className="text-green-500" title="Done" />
+      ) : (
+        <IconCircleDashed
+          size={20}
+          strokeWidth={2}
+          className="text-blue-500"
+          title="In Progress"
+        />
+      )}
+    </>
+  )
+}
+
 const RequirementsList = () => {
   const folderPath = useAppStore((state) => state.folderPath)
   const prdItems = useAppStore((state) => state.prdItems)
   const setPrdItems = useAppStore((state) => state.setPrdItems)
   const deletePrdItem = useAppStore((state) => state.deletePrdItem)
+  const workingItemId = useAppStore((state) => state.workingItemId)
 
   const [showForm, setShowForm] = useState(false)
   const [editingItemId, setEditingItemId] = useState(null)
@@ -145,6 +168,8 @@ const RequirementsList = () => {
     }
   }
 
+  const isItemWorking = (id, workingItemId) => id == workingItemId
+
   return (
     <div className="space-y-4">
       {/* Create New Requirement Button */}
@@ -210,22 +235,10 @@ const RequirementsList = () => {
                 {/* title and buttons */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {/* Status indicator icon */}
-                    {item.isDone ? (
-                      <IconCircleCheck
-                        size={20}
-                        strokeWidth={2}
-                        className="text-green-500"
-                        title="Done"
-                      />
-                    ) : (
-                      <IconCircleDashed
-                        size={20}
-                        strokeWidth={2}
-                        className="text-amber-500"
-                        title="In Progress"
-                      />
-                    )}
+                    <StatusIcon
+                      isDone={item.isDone}
+                      isItemWorking={isItemWorking(item.id, workingItemId)}
+                    />
                     <h4 className="font-medium text-gh-text">{item.title}</h4>
                   </div>
                   {/* buttons div */}
