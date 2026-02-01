@@ -6,6 +6,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
 import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient, getAvailableModels } from './copilot_client'
+import { getStoredCopilotPath, setStoredCopilotPath } from './helpers/store'
 
 function createWindow() {
   // Create the browser window.
@@ -195,12 +196,12 @@ ipcMain.handle('select-copilot-path', async () => {
 
 // IPC handler for saving Copilot path (for future persistence)
 ipcMain.handle('save-copilot-path', async (event, customPath) => {
-  // For now, just validate the path exists
-  // In the future, you could save this to app settings/config
+  // Validate the path exists and save to electron-store
   try {
     const stats = await fs.stat(customPath)
     if (stats.isFile()) {
-      return { success: true, message: 'Path validated successfully' }
+      setStoredCopilotPath(customPath)
+      return { success: true, message: 'Path saved successfully' }
     }
     return { success: false, message: 'Path is not a valid file' }
   } catch (error) {
