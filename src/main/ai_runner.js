@@ -6,83 +6,15 @@ import { findCopilotPath } from './helpers/get_copilot_path'
 import { getShellPath } from './helpers/getShellpath'
 import { findGitPath } from './helpers/getGitPath'
 import buildPrompt from './buildPrompt'
+import {
+  readProgressFile,
+  createProgressFile,
+  appendToProgressFile,
+  progressFileExists
+} from './progressTxtHelpers'
 
 // Module-level variable to track the current running process
 let currentProcess = null
-
-// ============ Progress.txt Helper Functions ============
-
-// Get the path to progress.txt
-function getProgressFilePath(folderPath) {
-  return path.join(folderPath, 'progress.txt')
-}
-
-// Read progress.txt content, returns empty string if file doesn't exist
-export async function readProgressFile(folderPath) {
-  try {
-    const progressPath = getProgressFilePath(folderPath)
-    const content = await fs.readFile(progressPath, 'utf-8')
-    return content
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return ''
-    }
-    console.error('Error reading progress.txt:', error)
-    return ''
-  }
-}
-
-// Create progress.txt if it doesn't exist
-export async function createProgressFile(folderPath, initialContent = '') {
-  try {
-    const progressPath = getProgressFilePath(folderPath)
-    await fs.writeFile(progressPath, initialContent, { flag: 'wx', encoding: 'utf-8' })
-    return { success: true }
-  } catch (error) {
-    if (error.code === 'EEXIST') {
-      return { success: true, message: 'File already exists' }
-    }
-    console.error('Error creating progress.txt:', error)
-    return { success: false, error: error.message }
-  }
-}
-
-// Append content to progress.txt, creates file if it doesn't exist
-export async function appendToProgressFile(folderPath, content) {
-  try {
-    const progressPath = getProgressFilePath(folderPath)
-    const timestamp = new Date().toISOString()
-    const formattedContent = `\n---\n[${timestamp}]\n${content}\n`
-    await fs.appendFile(progressPath, formattedContent, 'utf-8')
-    return { success: true }
-  } catch (error) {
-    console.error('Error appending to progress.txt:', error)
-    return { success: false, error: error.message }
-  }
-}
-
-// Clear progress.txt content
-export async function clearProgressFile(folderPath) {
-  try {
-    const progressPath = getProgressFilePath(folderPath)
-    await fs.writeFile(progressPath, '', 'utf-8')
-    return { success: true }
-  } catch (error) {
-    console.error('Error clearing progress.txt:', error)
-    return { success: false, error: error.message }
-  }
-}
-
-// Check if progress.txt exists
-export async function progressFileExists(folderPath) {
-  try {
-    const progressPath = getProgressFilePath(folderPath)
-    await fs.access(progressPath)
-    return true
-  } catch {
-    return false
-  }
-}
 
 // Extract summary from output buffer
 function extractSummary(outputBuffer) {
@@ -92,8 +24,6 @@ function extractSummary(outputBuffer) {
   }
   return null
 }
-
-// ============ End Progress.txt Helper Functions ============
 
 // Helper function to commit changes after requirement completion
 async function commitRequirementChanges(folderPath, requirement) {
@@ -223,7 +153,14 @@ export async function executeCommand(requirementId, folderPath) {
     // TODO: Remove comment
     console.log("requirement",requirement)
 
-    const prompt = buildPrompt(requirement.id, requirement.title, requirement.description)
+    // Ensure progress.txt exists before calling copilot
+    const progressExists = await progressFileExists(folderPath)
+    if (!progressExists) {
+      await createProgressFile(folderPath, '')
+    }
+    const progressTxt = await readProgressFile(folderPath)
+
+    const prompt = buildPrompt(requirement.id, requirement.title, requirement.description, progressTxt)
     const copilotPath = findCopilotPath()
     const shellPath = getShellPath()
 
