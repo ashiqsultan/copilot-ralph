@@ -5,6 +5,7 @@ import { BrowserWindow } from 'electron'
 import { findCopilotPath } from './helpers/get_copilot_path'
 import { getShellPath } from './helpers/getShellpath'
 import { findGitPath } from './helpers/getGitPath'
+import { getPrdExecutorModel } from './helpers/store'
 import buildPrompt from './buildPrompt'
 import {
   readProgressFile,
@@ -163,8 +164,16 @@ export async function executeCommand(requirementId, folderPath) {
     const prompt = buildPrompt(requirement.id, requirement.title, requirement.description, progressTxt)
     const copilotPath = findCopilotPath()
     const shellPath = getShellPath()
+    
+    // Get the selected model from store
+    const selectedModel = getPrdExecutorModel()
+    if (!selectedModel) {
+      mainWindow.webContents.send('executor:stderr', 'No model selected. Please select a model from the Model Selector before running.\n')
+      mainWindow.webContents.send('executor:complete', { code: 1, error: 'No model selected' })
+      return { success: false, error: 'No model selected. Please select a model from the Model Selector.' }
+    }
 
-    const args = ['--yolo', '--model', 'gpt-4.1', '-i', `"${prompt}"`]
+    const args = ['--yolo', '--model', selectedModel, '-i', `"${prompt}"`]
 
     const child = spawn(copilotPath, args, {
       shell: true,

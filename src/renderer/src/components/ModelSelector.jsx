@@ -29,12 +29,21 @@ const ModelSelector = () => {
     const fetchModels = async () => {
       setIsLoadingModels(true)
       try {
+        // Get stored model preference
+        const storedModel = await window.electron.ipcRenderer.invoke('get-prd-executor-model')
+        
         const result = await window.electron.ipcRenderer.invoke('get-available-models')
         if (result.success && result.models) {
           setModels(result.models)
-          // Set first model as default if available
-          if (result.models.length > 0) {
-            setSelectedModel(result.models[0].id || result.models[0].name || result.models[0])
+          
+          // Use stored model if available, otherwise default to first model
+          if (storedModel) {
+            setSelectedModel(storedModel)
+          } else if (result.models.length > 0) {
+            const firstModelId = result.models[0].id || result.models[0].name || result.models[0]
+            setSelectedModel(firstModelId)
+            // Save the default selection to store
+            await window.electron.ipcRenderer.invoke('set-prd-executor-model', firstModelId)
           }
         } else {
           console.error('Failed to fetch models:', result.message)
@@ -81,9 +90,11 @@ const ModelSelector = () => {
             return (
               <button
                 key={modelId}
-                onClick={() => {
+                onClick={async () => {
                   setSelectedModel(modelId)
                   setIsDropdownOpen(false)
+                  // Save selection to store
+                  await window.electron.ipcRenderer.invoke('set-prd-executor-model', modelId)
                 }}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gh-bg transition-colors ${
                   selectedModel === modelId ? 'bg-gh-blue-subtle text-gh-blue' : 'text-gh-text'

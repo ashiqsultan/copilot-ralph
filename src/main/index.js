@@ -6,7 +6,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
 import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient, getAvailableModels } from './copilot_client'
-import { getStoredCopilotPath, setStoredCopilotPath } from './helpers/store'
+import { getStoredCopilotPath, setStoredCopilotPath, getPrdExecutorModel, setPrdExecutorModel } from './helpers/store'
 
 function createWindow() {
   // Create the browser window.
@@ -212,4 +212,15 @@ ipcMain.handle('save-copilot-path', async (event, customPath) => {
 // IPC handler for getting available models
 ipcMain.handle('get-available-models', async () => {
   return getAvailableModels()
+})
+
+// IPC handler for getting stored executor model
+ipcMain.handle('get-prd-executor-model', async () => {
+  return getPrdExecutorModel()
+})
+
+// IPC handler for setting executor model
+ipcMain.handle('set-prd-executor-model', async (event, model) => {
+  setPrdExecutorModel(model)
+  return { success: true }
 })
