@@ -30,11 +30,10 @@ ${progressTxt}
 When the implementation is fully complete and working, respond with:
 <status>done</status>
 <summary>
-[Provide a concise summary including:
-- What was implemented (concise)
-- Files changed
-- Key decisions made
+[Provide a concise summary of:
+- Key decisions made when implementing the requirement
 - Any important notes]
+- Dont include any code or commands. Just have plain text.
 </summary>
 
 Begin implementation now.`;

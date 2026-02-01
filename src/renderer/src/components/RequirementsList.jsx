@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
@@ -6,7 +6,12 @@ import ConfirmDialog from './ConfirmDialog'
 const StatusIcon = ({ isDone, isItemWorking }) => {
   if (isItemWorking) {
     return (
-      <IconCircleDashed size={20} strokeWidth={2} className="text-amber-500 animate-spin-slow" title="In Progress" />
+      <IconCircleDashed
+        size={20}
+        strokeWidth={2}
+        className="text-amber-500 animate-spin-slow"
+        title="In Progress"
+      />
     )
   }
   return (
@@ -14,12 +19,7 @@ const StatusIcon = ({ isDone, isItemWorking }) => {
       {isDone ? (
         <IconCircleCheck size={20} strokeWidth={2} className="text-green-500" title="Done" />
       ) : (
-        <IconCircleDashed
-          size={20}
-          strokeWidth={2}
-          className="text-blue-500"
-          title="In Progress"
-        />
+        <IconCircleDashed size={20} strokeWidth={2} className="text-blue-500" title="In Progress" />
       )}
     </>
   )
@@ -142,7 +142,8 @@ const RequirementsList = () => {
       const newItem = {
         id: nextId,
         title,
-        description: description || 'No description'
+        description: description || 'No description',
+        isDone: false
       }
 
       updatedItems.push(newItem)
