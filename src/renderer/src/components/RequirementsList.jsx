@@ -177,7 +177,7 @@ const RequirementsList = () => {
         onClick={handleCreateNewRequirement}
         className="bg-gh-green hover:bg-gh-green-hover text-white font-medium py-2 px-4 rounded-md"
       >
-        Create new requirement
+        Add Requirement
       </button>
 
       {/* Input Form */}
