@@ -208,9 +208,9 @@ const RightColumn = () => {
   }
 
   return (
-    <div className="bg-gh-bg flex flex-col min-h-full border-l border-gh-border p-6">
+    <div className="bg-gh-bg flex flex-col flex-1 border-l border-gh-border p-6 overflow-hidden">
       {/* Header with button and status */}
-      <div className="flex items-center justify-between pb-4">
+      <div className="flex items-center justify-between pb-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={handleStartClick}
@@ -250,7 +250,7 @@ const RightColumn = () => {
       {/* Output Container */}
       <div
         ref={outputContainerRef}
-        className="flex-1 bg-gh-surface rounded-md border border-gh-border p-4 font-mono text-sm text-gh-text overflow-y-auto"
+        className="flex-1 min-h-0 bg-gh-surface rounded-md border border-gh-border p-4 font-mono text-sm text-gh-text overflow-y-auto"
       >
         {outputLines.length === 0 ? (
           <div className="text-gh-text-muted italic">Progress will appear here</div>

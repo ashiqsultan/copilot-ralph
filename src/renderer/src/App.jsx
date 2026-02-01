@@ -5,16 +5,16 @@ import CopilotSettings from './components/CopilotSettings'
 
 function App() {
   return (
-    <div className="bg-gh-bg text-gh-text min-h-screen  flex flex-col">
+    <div className="bg-gh-bg text-gh-text h-screen max-h-screen flex flex-col overflow-hidden">
       <TopBar />
       <CopilotSettings />
 
-      <div className="flex w-full flex-1  min-h-0">
-        <div className="w-[60%]  h-full min-h-0">
+      <div className="flex w-full flex-1 min-h-0 overflow-hidden">
+        <div className="w-[60%] h-full overflow-y-auto">
           <LeftColumn />
         </div>
 
-        <div className="w-[40%]  min-h-full min-h-0">
+        <div className="w-[40%] h-full flex">
           <RightColumn />
         </div>
       </div>
