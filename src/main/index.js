@@ -7,6 +7,8 @@ import fs from 'node:fs/promises'
 import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
 import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient, getAvailableModels } from './copilot_client'
 import { getStoredCopilotPath, setStoredCopilotPath, getPrdExecutorModel, setPrdExecutorModel } from './helpers/store'
+import { readProgressFile, clearProgressFile } from './progressTxtHelpers'
+import { getGitLog } from './gitHelpers'
 
 function createWindow() {
   // Create the browser window.
@@ -224,4 +226,19 @@ ipcMain.handle('get-prd-executor-model', async () => {
 ipcMain.handle('set-prd-executor-model', async (event, model) => {
   setPrdExecutorModel(model)
   return { success: true }
+})
+
+// IPC handler for reading progress.txt
+ipcMain.handle('fs:readProgressFile', async (event, folderPath) => {
+  return readProgressFile(folderPath)
+})
+
+// IPC handler for clearing progress.txt
+ipcMain.handle('fs:clearProgressFile', async (event, folderPath) => {
+  return clearProgressFile(folderPath)
+})
+
+// IPC handler for getting git log
+ipcMain.handle('git:getLog', async (event, folderPath) => {
+  return getGitLog(folderPath)
 })
