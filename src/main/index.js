@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
-import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient } from './copilot_client'
+import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient, getAvailableModels } from './copilot_client'
 
 function createWindow() {
   // Create the browser window.
@@ -206,4 +206,9 @@ ipcMain.handle('save-copilot-path', async (event, customPath) => {
   } catch (error) {
     return { success: false, message: `Path validation failed: ${error.message}` }
   }
+})
+
+// IPC handler for getting available models
+ipcMain.handle('get-available-models', async () => {
+  return getAvailableModels()
 })

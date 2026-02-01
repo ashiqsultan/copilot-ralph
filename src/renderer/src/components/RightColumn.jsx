@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
 import { IconPlayerPlayFilled, IconCancel } from '@tabler/icons-react'
+import ModelSelector from './ModelSelector'
 
 const RightColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -213,6 +214,9 @@ const RightColumn = () => {
             <IconCancel size={18} strokeWidth={2} />
             Abort
           </button>
+
+          {/* Model Selector */}
+          <ModelSelector />
         </div>
 
         {/* Status Indicator */}

@@ -73,6 +73,46 @@ export async function checkCopilotStatus() {
 }
 
 /**
+ * Get list of available models from Copilot
+ * @returns {Promise<{success: boolean, models?: Array, message?: string}>}
+ */
+export async function getAvailableModels() {
+  try {
+    // Get the Copilot CLI path
+    const cliPath = getCopilotPath()
+    
+    if (!cliPath || cliPath === 'copilot') {
+      return {
+        success: false,
+        message: 'GitHub Copilot CLI not found. Please ensure it is installed and available in your PATH.'
+      }
+    }
+
+    // Create/get client with the CLI path
+    const copilotClient = await getCopilotClient(cliPath)
+    
+    // Start the client if not already started
+    const state = copilotClient.getState()
+    if (state !== 'connected') {
+      await copilotClient.start()
+    }
+
+    // Get the list of models
+    const models = await copilotClient.listModels()
+    
+    return {
+      success: true,
+      models: models
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to get available models: ${error.message}`
+    }
+  }
+}
+
+/**
  * Clean up the Copilot client
  */
 export async function cleanupCopilotClient() {
