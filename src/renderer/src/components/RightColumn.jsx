@@ -12,6 +12,7 @@ const RightColumn = () => {
   const setWorkingItemId = useAppStore((state) => state.setWorkingItemId)
   const appendOutputLine = useAppStore((state) => state.appendOutputLine)
   const clearOutput = useAppStore((state) => state.clearOutput)
+  const updatePrdItem = useAppStore((state) => state.updatePrdItem)
 
   const outputContainerRef = useRef(null)
 
@@ -48,13 +49,23 @@ const RightColumn = () => {
       }
     )
 
+    // Listen for requirement marked as done
+    const removeMarkedDoneListener = window.electron.ipcRenderer.on(
+      'requirement:marked-done',
+      (_, requirementId) => {
+        // Update the store to mark this item as done
+        updatePrdItem(requirementId, { isDone: true })
+      }
+    )
+
     // Cleanup listeners on unmount
     return () => {
       if (removeOutputListener) removeOutputListener()
       if (removeErrorListener) removeErrorListener()
       if (removeCompleteListener) removeCompleteListener()
+      if (removeMarkedDoneListener) removeMarkedDoneListener()
     }
-  }, [])
+  }, [appendOutputLine, updatePrdItem])
 
   // Handle start button click
   const handleStartClick = useCallback(async () => {
@@ -146,7 +157,6 @@ const RightColumn = () => {
       if (!wasAborted) {
         setWorkingItemId(null)
         setIsRunning(false)
-
         appendOutputLine('\n--- All pending items have been processed ---', 'success')
       }
     } catch (error) {
@@ -154,7 +164,15 @@ const RightColumn = () => {
       setWorkingItemId(null)
       setIsRunning(false)
     }
-  }, [isRunning, folderPath, getPrdItems, clearOutput, setIsRunning, setWorkingItemId, appendOutputLine])
+  }, [
+    isRunning,
+    folderPath,
+    getPrdItems,
+    clearOutput,
+    setIsRunning,
+    setWorkingItemId,
+    appendOutputLine
+  ])
 
   const handleAbortClick = async () => {
     try {

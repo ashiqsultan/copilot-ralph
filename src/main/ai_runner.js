@@ -170,6 +170,8 @@ export async function executeCommand(requirementId, folderPath) {
         hasMarkedDone = true
         await updatePrdIsDone(folderPath, requirement.id, true)
         mainWindow.webContents.send('executor:stdout', '\n--- Requirement marked as done ---')
+        // Notify frontend to update the UI
+        mainWindow.webContents.send('requirement:marked-done', requirement.id)
 
         const commitResult = await commitRequirementChanges(folderPath, requirement)
         if (commitResult.success) {
