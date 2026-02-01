@@ -4,7 +4,8 @@ import {
   IconFolder,
   IconFolderPlus,
   IconFolderOpen,
-  IconBrandGithubCopilot
+  IconBrandGithubCopilot,
+  IconSettings
 } from '@tabler/icons-react'
 import Tooltip from './Tooltip'
 
@@ -90,7 +91,7 @@ const TopBar = ({ onFolderChange }) => {
 
   const onCopilotIconClick = () => {
     setIsCopilotSettingsOpen(true)
-    console.log("oncopilot buttonclick")
+    console.log('oncopilot buttonclick')
   }
 
   return (
@@ -98,14 +99,15 @@ const TopBar = ({ onFolderChange }) => {
       <div className="flex items-center justify-between">
         {/* buttons: max 30% */}
         <div className="flex gap-2 w-[20%] min-w-[120px]">
-          <Tooltip text="Config" position="bottom">
+          {/* <Tooltip text="Config" position="bottom">
             <button
               onClick={onCopilotIconClick}
               className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
             >
               <IconBrandGithubCopilot color="white" size={18} />
+              <IconSettings color="white" size={18} />
             </button>
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip text="Open an existing folder" position="bottom">
             <button
               onClick={handleOpenFolder}
@@ -127,7 +129,7 @@ const TopBar = ({ onFolderChange }) => {
         </div>
 
         {/* folder path: 70% with truncation */}
-        <div className="w-[80%] text-center mx-4 min-w-0">
+        <div className="w-[70%] text-center mx-4 min-w-0">
           {folderPath ? (
             <>
               {/* Project Name (last folder) with open icon */}
@@ -149,6 +151,18 @@ const TopBar = ({ onFolderChange }) => {
           ) : (
             <div className="text-gh-text-muted">No folder selected</div>
           )}
+        </div>
+
+        <div className="w-[10%] text-center">
+          <Tooltip text="Settings" position="bottom">
+            <button
+              onClick={onCopilotIconClick}
+              className="bg-gh-bg hover:bg-gh-border text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm border border-gh-border"
+            >
+              {/* <IconBrandGithubCopilot color="white" size={18} /> */}
+              <IconSettings color="white" size={18} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
