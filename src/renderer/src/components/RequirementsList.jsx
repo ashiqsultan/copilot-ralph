@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconTrash, IconEdit } from '@tabler/icons-react'
+import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
 
 const RequirementsList = () => {
@@ -209,7 +209,25 @@ const RequirementsList = () => {
               <div className="">
                 {/* title and buttons */}
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gh-text">{item.title}</h4>
+                  <div className="flex items-center gap-2">
+                    {/* Status indicator icon */}
+                    {item.isDone ? (
+                      <IconCircleCheck
+                        size={20}
+                        strokeWidth={2}
+                        className="text-green-500"
+                        title="Done"
+                      />
+                    ) : (
+                      <IconCircleDashed
+                        size={20}
+                        strokeWidth={2}
+                        className="text-amber-500"
+                        title="In Progress"
+                      />
+                    )}
+                    <h4 className="font-medium text-gh-text">{item.title}</h4>
+                  </div>
                   {/* buttons div */}
                   <div>
                     <button
