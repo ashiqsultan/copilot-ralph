@@ -72,10 +72,9 @@ async function commitRequirementChanges(folderPath, requirement) {
   }
 }
 
-// Helper function to read prd.json and find requirement by ID
 async function getRequirementById(folderPath, requirementId) {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const prdPath = path.join(folderPath, '.copilot_ralph', 'prd.json')
     const content = await fs.readFile(prdPath, 'utf-8')
     const prdContent = JSON.parse(content)
 
@@ -92,7 +91,7 @@ async function getRequirementById(folderPath, requirementId) {
 // Helper function to update requirement isDone status
 async function updatePrdIsDone(folderPath, requirementId, isDone) {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const prdPath = path.join(folderPath, '.copilot_ralph', 'prd.json')
     const content = await fs.readFile(prdPath, 'utf-8')
     const prdContent = JSON.parse(content)
 
@@ -114,7 +113,7 @@ async function updatePrdIsDone(folderPath, requirementId, isDone) {
 // Helper function to get next incomplete requirement
 async function getNextIncompleteRequirement(folderPath) {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const prdPath = path.join(folderPath, '.copilot_ralph', 'prd.json')
     const content = await fs.readFile(prdPath, 'utf-8')
     const prdContent = JSON.parse(content)
 

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 
 // Get the path to progress.txt
 function getProgressFilePath(folderPath) {
-  return path.join(folderPath, 'progress.txt')
+  return path.join(folderPath, '.copilot_ralph', 'progress.txt')
 }
 
 // Read progress.txt content, returns empty string if file doesn't exist
@@ -24,6 +24,8 @@ export async function readProgressFile(folderPath) {
 // Create progress.txt if it doesn't exist
 export async function createProgressFile(folderPath, initialContent = '') {
   try {
+    const copilotRalphDir = path.join(folderPath, '.copilot_ralph')
+    await fs.mkdir(copilotRalphDir, { recursive: true })
     const progressPath = getProgressFilePath(folderPath)
     await fs.writeFile(progressPath, initialContent, { flag: 'wx', encoding: 'utf-8' })
     return { success: true }
@@ -39,6 +41,8 @@ export async function createProgressFile(folderPath, initialContent = '') {
 // Append content to progress.txt, creates file if it doesn't exist
 export async function appendToProgressFile(folderPath, content) {
   try {
+    const copilotRalphDir = path.join(folderPath, '.copilot_ralph')
+    await fs.mkdir(copilotRalphDir, { recursive: true })
     const progressPath = getProgressFilePath(folderPath)
     const timestamp = new Date().toISOString()
     const formattedContent = `\n---\n[${timestamp}]\n${content}\n`
@@ -53,6 +57,8 @@ export async function appendToProgressFile(folderPath, content) {
 // Clear progress.txt content
 export async function clearProgressFile(folderPath) {
   try {
+    const copilotRalphDir = path.join(folderPath, '.copilot_ralph')
+    await fs.mkdir(copilotRalphDir, { recursive: true })
     const progressPath = getProgressFilePath(folderPath)
     await fs.writeFile(progressPath, '', 'utf-8')
     return { success: true }

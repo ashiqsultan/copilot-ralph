@@ -128,10 +128,9 @@ ipcMain.handle('dialog:openInExplorer', async (event, folderPath) => {
   }
 })
 
-// IPC handler for reading prd.json file
 ipcMain.handle('fs:readPrdFile', async (event, folderPath) => {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const prdPath = path.join(folderPath, '.copilot_ralph', 'prd.json')
     const content = await fs.readFile(prdPath, 'utf-8')
     return JSON.parse(content)
   } catch (error) {
@@ -139,10 +138,11 @@ ipcMain.handle('fs:readPrdFile', async (event, folderPath) => {
   }
 })
 
-// IPC handler for creating prd.json file
 ipcMain.handle('fs:createPrdFile', async (event, folderPath, content) => {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const copilotRalphDir = path.join(folderPath, '.copilot_ralph')
+    await fs.mkdir(copilotRalphDir, { recursive: true })
+    const prdPath = path.join(copilotRalphDir, 'prd.json')
     await fs.writeFile(prdPath, content, 'utf-8')
     return true
   } catch (error) {
@@ -151,10 +151,11 @@ ipcMain.handle('fs:createPrdFile', async (event, folderPath, content) => {
   }
 })
 
-// IPC handler for saving prd.json file
 ipcMain.handle('fs:savePrdFile', async (event, folderPath, content) => {
   try {
-    const prdPath = path.join(folderPath, 'prd.json')
+    const copilotRalphDir = path.join(folderPath, '.copilot_ralph')
+    await fs.mkdir(copilotRalphDir, { recursive: true })
+    const prdPath = path.join(copilotRalphDir, 'prd.json')
     await fs.writeFile(prdPath, content, 'utf-8')
     return true
   } catch (error) {
