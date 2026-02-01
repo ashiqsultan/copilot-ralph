@@ -242,3 +242,52 @@ ipcMain.handle('fs:clearProgressFile', async (event, folderPath) => {
 ipcMain.handle('git:getLog', async (event, folderPath) => {
   return getGitLog(folderPath)
 })
+
+// IPC handler for selecting image files
+ipcMain.handle('dialog:selectImages', async (event, folderPath) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'] }
+    ],
+    title: 'Select Images'
+  })
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, attachments: [] }
+  }
+
+  const attachmentsDir = path.join(folderPath, '.copilot_ralph', 'attachments')
+  await fs.mkdir(attachmentsDir, { recursive: true })
+
+  const attachments = []
+  for (const filePath of result.filePaths) {
+    try {
+      const fileName = path.basename(filePath)
+      const ext = path.extname(fileName).toLowerCase()
+      
+      // Validate image extension
+      const validExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg']
+      if (!validExts.includes(ext)) {
+        continue
+      }
+
+      // Generate unique filename to avoid overwrites
+      const timestamp = Date.now()
+      const uniqueFileName = `${timestamp}_${fileName}`
+      const destPath = path.join(attachmentsDir, uniqueFileName)
+      
+      await fs.copyFile(filePath, destPath)
+      
+      attachments.push({
+        type: 'image',
+        path: `.copilot_ralph/attachments/${uniqueFileName}`,
+        displayName: fileName
+      })
+    } catch (error) {
+      console.error('Error copying image file:', error)
+    }
+  }
+
+  return { success: true, attachments }
+})

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed } from '@tabler/icons-react'
+import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed, IconUpload, IconX } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
 
 const StatusIcon = ({ isDone, isItemWorking }) => {
@@ -38,12 +38,15 @@ const RequirementsList = () => {
   const [formDescription, setFormDescription] = useState('')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const [formAttachments, setFormAttachments] = useState([])
+  const [isUploading, setIsUploading] = useState(false)
 
   // Handle create new requirement button
   const handleCreateNewRequirement = () => {
     setEditingItemId(null)
     setFormTitle('')
     setFormDescription('')
+    setFormAttachments([])
     setShowForm(true)
   }
 
@@ -53,6 +56,7 @@ const RequirementsList = () => {
     setEditingItemId(null)
     setFormTitle('')
     setFormDescription('')
+    setFormAttachments([])
   }
 
   // Handle edit item
@@ -62,8 +66,35 @@ const RequirementsList = () => {
       setEditingItemId(itemId)
       setFormTitle(item.title)
       setFormDescription(item.description)
+      setFormAttachments(item.attachments || [])
       setShowForm(true)
     }
+  }
+
+  // Handle image upload
+  const handleUploadImages = async () => {
+    if (!folderPath) {
+      alert('No folder selected')
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const result = await window.electron.ipcRenderer.invoke('dialog:selectImages', folderPath)
+      if (result.success && result.attachments.length > 0) {
+        setFormAttachments((prev) => [...prev, ...result.attachments])
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      alert('Failed to upload images')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Remove attachment from form
+  const handleRemoveAttachment = (index) => {
+    setFormAttachments((prev) => prev.filter((_, i) => i !== index))
   }
 
   // Handle delete item
@@ -131,7 +162,8 @@ const RequirementsList = () => {
         updatedItems[itemIndex] = {
           ...updatedItems[itemIndex],
           title,
-          description: description || 'No description'
+          description: description || 'No description',
+          attachments: formAttachments.length > 0 ? formAttachments : undefined
         }
       }
     } else {
@@ -143,7 +175,8 @@ const RequirementsList = () => {
         id: nextId,
         title,
         description: description || 'No description',
-        isDone: false
+        isDone: false,
+        attachments: formAttachments.length > 0 ? formAttachments : undefined
       }
 
       updatedItems.push(newItem)
@@ -205,6 +238,38 @@ const RequirementsList = () => {
               placeholder="Enter description"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gh-text mb-1">Attachments</label>
+            <button
+              onClick={handleUploadImages}
+              disabled={isUploading}
+              className="flex items-center gap-2 px-3 py-2 bg-gh-bg border border-gh-border-muted rounded-md text-gh-text hover:bg-gh-border-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconUpload size={18} strokeWidth={2} />
+              {isUploading ? 'Uploading...' : 'Upload Images'}
+            </button>
+            {formAttachments.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formAttachments.map((attachment, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 px-2 py-1 bg-gh-bg border border-gh-border-muted rounded text-sm text-gh-text"
+                  >
+                    <span className="truncate max-w-32" title={attachment.displayName}>
+                      {attachment.displayName}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveAttachment(index)}
+                      className="p-0.5 text-gh-text-muted hover:text-gh-red rounded"
+                      title="Remove attachment"
+                    >
+                      <IconX size={14} strokeWidth={2} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex gap-2">
             <button
               onClick={handleSave}
@@ -264,6 +329,20 @@ const RequirementsList = () => {
                 <div>
                   <p className="text-sm text-gh-text-muted">{item.description}</p>
                 </div>
+                {/* attachments */}
+                {item.attachments && item.attachments.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {item.attachments.map((attachment, index) => (
+                      <span
+                        key={index}
+                        className="text-xs px-2 py-0.5 bg-gh-bg border border-gh-border-muted rounded text-gh-text-muted"
+                        title={attachment.path}
+                      >
+                        📎 {attachment.displayName}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))
