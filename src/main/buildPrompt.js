@@ -26,15 +26,17 @@ ${progressTxt}
 - Never ask further questions  - make reasonable assumptions and proceed
 - Never read folders like node_modules or .venv or any big folders that is typically git ignored
 
-## Progress Tracking
-After completing each task, append the following details about the task to progress.txt
-- Task completed and PRD item reference
-- Key decisions made and reasoning
+## Completion
+When the implementation is fully complete and working, respond with:
+<status>done</status>
+<summary>
+[Provide a concise summary including:
+- What was implemented (concise)
 - Files changed
-- Any blockers or notes for next iteration
-Keep entries concise. Sacrifice grammar for the sake of concision. This file helps future iterations skip exploration.
+- Key decisions made
+- Any important notes]
+</summary>
 
-- Only output <status>done</status> when the implementation is fully complete.
 Begin implementation now.`;
 }
 
