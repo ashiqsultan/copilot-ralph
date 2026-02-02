@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
 import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed, IconUpload, IconX } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
+import FileReferenceDropdown from './FileReferenceDropdown'
 
 const StatusIcon = ({ isDone, isItemWorking }) => {
   if (isItemWorking) {
@@ -40,6 +41,24 @@ const RequirementsList = () => {
   const [itemToDelete, setItemToDelete] = useState(null)
   const [formAttachments, setFormAttachments] = useState([])
   const [isUploading, setIsUploading] = useState(false)
+  const [projectFiles, setProjectFiles] = useState([])
+  const [showFileDropdown, setShowFileDropdown] = useState(false)
+  const [fileSearchQuery, setFileSearchQuery] = useState('')
+  const [atTriggerPosition, setAtTriggerPosition] = useState(null)
+  const descriptionRef = useRef(null)
+
+  // Fetch project files from backend
+  const fetchProjectFiles = async () => {
+    if (!folderPath) return
+    try {
+      const result = await window.electron.ipcRenderer.invoke('fs:getProjectFiles', folderPath)
+      if (result.success) {
+        setProjectFiles(result.files)
+      }
+    } catch (error) {
+      console.error('Error fetching project files:', error)
+    }
+  }
 
   // Handle create new requirement button
   const handleCreateNewRequirement = () => {
@@ -48,6 +67,7 @@ const RequirementsList = () => {
     setFormDescription('')
     setFormAttachments([])
     setShowForm(true)
+    fetchProjectFiles()
   }
 
   // Handle cancel button
@@ -57,6 +77,9 @@ const RequirementsList = () => {
     setFormTitle('')
     setFormDescription('')
     setFormAttachments([])
+    setShowFileDropdown(false)
+    setFileSearchQuery('')
+    setAtTriggerPosition(null)
   }
 
   // Handle edit item
@@ -68,6 +91,7 @@ const RequirementsList = () => {
       setFormDescription(item.description)
       setFormAttachments(item.attachments || [])
       setShowForm(true)
+      fetchProjectFiles()
     }
   }
 
@@ -95,6 +119,64 @@ const RequirementsList = () => {
   // Remove attachment from form
   const handleRemoveAttachment = (index) => {
     setFormAttachments((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Handle description change with @ trigger detection
+  const handleDescriptionChange = (e) => {
+    const value = e.target.value
+    const cursorPos = e.target.selectionStart
+    setFormDescription(value)
+
+    // Find the last @ before cursor
+    const textBeforeCursor = value.substring(0, cursorPos)
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@')
+
+    if (lastAtIndex !== -1) {
+      // Check if there's a space or newline between @ and cursor
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1)
+      const hasSpaceOrNewline = /[\s\n]/.test(textAfterAt)
+
+      if (!hasSpaceOrNewline) {
+        setShowFileDropdown(true)
+        setFileSearchQuery(textAfterAt)
+        setAtTriggerPosition(lastAtIndex)
+        return
+      }
+    }
+
+    setShowFileDropdown(false)
+    setFileSearchQuery('')
+    setAtTriggerPosition(null)
+  }
+
+  // Handle file selection from dropdown
+  const handleFileSelect = (filePath) => {
+    if (atTriggerPosition === null) return
+
+    const beforeAt = formDescription.substring(0, atTriggerPosition)
+    const afterSearch = formDescription.substring(atTriggerPosition + 1 + fileSearchQuery.length)
+    const newDescription = `${beforeAt}@${filePath}${afterSearch}`
+
+    setFormDescription(newDescription)
+    setShowFileDropdown(false)
+    setFileSearchQuery('')
+    setAtTriggerPosition(null)
+
+    // Focus back on textarea
+    if (descriptionRef.current) {
+      descriptionRef.current.focus()
+      const newCursorPos = atTriggerPosition + 1 + filePath.length
+      setTimeout(() => {
+        descriptionRef.current.setSelectionRange(newCursorPos, newCursorPos)
+      }, 0)
+    }
+  }
+
+  // Close file dropdown
+  const handleCloseFileDropdown = () => {
+    setShowFileDropdown(false)
+    setFileSearchQuery('')
+    setAtTriggerPosition(null)
   }
 
   // Handle delete item
@@ -228,14 +310,23 @@ const RequirementsList = () => {
               autoFocus
             />
           </div>
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gh-text mb-1">Description</label>
             <textarea
+              ref={descriptionRef}
               value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
+              onChange={handleDescriptionChange}
               className="w-full px-3 py-2 bg-gh-bg border border-gh-border-muted rounded-md text-gh-text focus:outline-none focus:ring-2 focus:ring-gh-blue-focus focus:border-transparent placeholder-gh-text-muted"
               rows="3"
-              placeholder="Enter description"
+              placeholder="Enter description (type @ to reference files)"
+            />
+            <FileReferenceDropdown
+              files={projectFiles}
+              searchQuery={fileSearchQuery}
+              onSelect={handleFileSelect}
+              onClose={handleCloseFileDropdown}
+              isOpen={showFileDropdown}
+              textareaRef={descriptionRef}
             />
           </div>
           <div>

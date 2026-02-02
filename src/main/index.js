@@ -4,11 +4,27 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { executeCommand, abortCurrentProcess, isProcessRunning, getCurrentProcessInfo } from './ai_runner'
-import { checkCopilotStatus, getCopilotPath, cleanupCopilotClient, getAvailableModels } from './copilot_client'
-import { getStoredCopilotPath, setStoredCopilotPath, getPrdExecutorModel, setPrdExecutorModel } from './helpers/store'
+import {
+  executeCommand,
+  abortCurrentProcess,
+  isProcessRunning,
+  getCurrentProcessInfo
+} from './ai_runner'
+import {
+  checkCopilotStatus,
+  getCopilotPath,
+  cleanupCopilotClient,
+  getAvailableModels
+} from './copilot_client'
+import {
+  getStoredCopilotPath,
+  setStoredCopilotPath,
+  getPrdExecutorModel,
+  setPrdExecutorModel
+} from './helpers/store'
 import { readProgressFile, clearProgressFile } from './progressTxtHelpers'
 import { getGitLog } from './gitHelpers'
+import { getProjectFiles } from './getProjectFiles'
 
 function createWindow() {
   // Create the browser window.
@@ -74,7 +90,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   // Clean up Copilot client on quit
   cleanupCopilotClient()
-  
+
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -243,13 +259,16 @@ ipcMain.handle('git:getLog', async (event, folderPath) => {
   return getGitLog(folderPath)
 })
 
+// IPC handler for getting all project files recursively
+ipcMain.handle('fs:getProjectFiles', async (event, folderPath) => {
+  return getProjectFiles(folderPath)
+})
+
 // IPC handler for selecting image files
 ipcMain.handle('dialog:selectImages', async (event, folderPath) => {
   const result = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
-    filters: [
-      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'] }
-    ],
+    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'] }],
     title: 'Select Images'
   })
 
@@ -265,7 +284,7 @@ ipcMain.handle('dialog:selectImages', async (event, folderPath) => {
     try {
       const fileName = path.basename(filePath)
       const ext = path.extname(fileName).toLowerCase()
-      
+
       // Validate image extension
       const validExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg']
       if (!validExts.includes(ext)) {
@@ -276,9 +295,9 @@ ipcMain.handle('dialog:selectImages', async (event, folderPath) => {
       const timestamp = Date.now()
       const uniqueFileName = `${timestamp}_${fileName}`
       const destPath = path.join(attachmentsDir, uniqueFileName)
-      
+
       await fs.copyFile(filePath, destPath)
-      
+
       attachments.push({
         type: 'image',
         path: `.copilot_ralph/attachments/${uniqueFileName}`,
