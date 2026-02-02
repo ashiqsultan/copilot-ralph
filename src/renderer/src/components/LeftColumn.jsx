@@ -2,6 +2,8 @@ import { useEffect, useCallback, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import RequirementsList from './RequirementsList'
 import Intro from './Intro'
+import ProgressTab from './ProgressTab'
+import GitLogsTab from './GitLogsTab'
 
 const LeftColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -10,9 +12,6 @@ const LeftColumn = () => {
   const setPrdItems = useAppStore((state) => state.setPrdItems)
 
   const [activeTab, setActiveTab] = useState('requirements')
-  const [progressContent, setProgressContent] = useState('')
-  const [gitLogs, setGitLogs] = useState('')
-  const [gitError, setGitError] = useState('')
 
   // Check for prd.json file when folder changes
   useEffect(() => {
@@ -20,56 +19,6 @@ const LeftColumn = () => {
       checkPrdFile(folderPath)
     }
   }, [folderPath])
-
-  // Load progress content when tab changes to progress
-  useEffect(() => {
-    if (activeTab === 'progress' && folderPath) {
-      loadProgress()
-    }
-  }, [activeTab, folderPath])
-
-  // Load git logs when tab changes to gitLogs
-  useEffect(() => {
-    if (activeTab === 'gitLogs' && folderPath) {
-      loadGitLogs()
-    }
-  }, [activeTab, folderPath])
-
-  const loadProgress = async () => {
-    try {
-      const content = await window.electron.ipcRenderer.invoke('fs:readProgressFile', folderPath)
-      setProgressContent(content || '')
-    } catch (error) {
-      console.error('Error loading progress:', error)
-      setProgressContent('')
-    }
-  }
-
-  const loadGitLogs = async () => {
-    try {
-      const result = await window.electron.ipcRenderer.invoke('git:getLog', folderPath)
-      if (result.success) {
-        setGitLogs(result.logs)
-        setGitError('')
-      } else {
-        setGitLogs('')
-        setGitError(result.error || 'Failed to load git logs')
-      }
-    } catch (error) {
-      console.error('Error loading git logs:', error)
-      setGitLogs('')
-      setGitError('Failed to load git logs')
-    }
-  }
-
-  const clearProgress = async () => {
-    try {
-      await window.electron.ipcRenderer.invoke('fs:clearProgressFile', folderPath)
-      setProgressContent('')
-    } catch (error) {
-      console.error('Error clearing progress:', error)
-    }
-  }
 
   // Check for prd.json file
   const checkPrdFile = useCallback(
@@ -175,44 +124,8 @@ const LeftColumn = () => {
           {/* Tab content */}
           <div className="flex-1 overflow-auto">
             {activeTab === 'requirements' && <RequirementsList />}
-
-            {activeTab === 'progress' && (
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gh-text-secondary text-sm">progress.txt</span>
-                  <button
-                    onClick={clearProgress}
-                    className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                  >
-                    Clear Progress
-                  </button>
-                </div>
-                <pre className="flex-1 bg-gh-bg-secondary p-4 rounded-md text-gh-text-primary text-sm overflow-auto whitespace-pre-wrap font-mono">
-                  {progressContent || 'No progress recorded yet.'}
-                </pre>
-              </div>
-            )}
-
-            {activeTab === 'gitLogs' && (
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gh-text-secondary text-sm">Git Commit History</span>
-                  <button
-                    onClick={loadGitLogs}
-                    className="text-xs bg-gh-green hover:bg-gh-green-hover text-white px-3 py-1 rounded"
-                  >
-                    Refresh
-                  </button>
-                </div>
-                {gitError ? (
-                  <div className="text-red-400 text-sm">{gitError}</div>
-                ) : (
-                  <pre className="flex-1 bg-gh-bg-secondary p-4 rounded-md text-gh-text-primary text-sm overflow-auto whitespace-pre-wrap font-mono">
-                    {gitLogs || 'No commits found.'}
-                  </pre>
-                )}
-              </div>
-            )}
+            {activeTab === 'progress' && <ProgressTab />}
+            {activeTab === 'gitLogs' && <GitLogsTab />}
           </div>
         </>
       )}
