@@ -151,7 +151,7 @@ export async function executeCommand(requirementId, folderPath) {
     }
 
     // TODO: Remove comment
-    console.log("requirement",requirement)
+    console.log('requirement', requirement)
 
     // Ensure progress.txt exists before calling copilot
     const progressExists = await progressFileExists(folderPath)
@@ -160,25 +160,41 @@ export async function executeCommand(requirementId, folderPath) {
     }
     const progressTxt = await readProgressFile(folderPath)
 
-    const prompt = buildPrompt(requirement.id, requirement.title, requirement.description, progressTxt)
+    const prompt = buildPrompt(
+      requirement.id,
+      requirement.title,
+      requirement.description,
+      progressTxt
+    )
     const copilotPath = findCopilotPath()
     const shellPath = getShellPath()
-    
+
     // Get the selected model from store
     const selectedModel = getPrdExecutorModel()
     if (!selectedModel) {
-      mainWindow.webContents.send('executor:stderr', 'No model selected. Please select a model from the Model Selector before running.\n')
+      mainWindow.webContents.send(
+        'executor:stderr',
+        'No model selected. Please select a model from the Model Selector before running.\n'
+      )
       mainWindow.webContents.send('executor:complete', { code: 1, error: 'No model selected' })
-      return { success: false, error: 'No model selected. Please select a model from the Model Selector.' }
+      return {
+        success: false,
+        error: 'No model selected. Please select a model from the Model Selector.'
+      }
     }
 
-    const args = ['--yolo', '--model', selectedModel, '-i', `"${prompt}"`]
+    // Pass prompt via stdin instead of CLI argument to avoid shell escaping issues
+    const args = ['--yolo', '--no-auto-update ', '--model', selectedModel]
 
     const child = spawn(copilotPath, args, {
       shell: true,
       cwd: folderPath,
       env: { ...process.env, PATH: shellPath }
     })
+
+    // Write prompt to stdin and close it
+    child.stdin.write(prompt)
+    child.stdin.end()
 
     // Store the current process for potential abort
     currentProcess = {
@@ -220,9 +236,15 @@ export async function executeCommand(requirementId, folderPath) {
           const summaryWithContext = `[${requirement.id}] ${requirement.title}\n${summary}`
           const appendResult = await appendToProgressFile(folderPath, summaryWithContext)
           if (appendResult.success) {
-            mainWindow.webContents.send('executor:stdout', '\n--- Summary saved to progress.txt ---')
+            mainWindow.webContents.send(
+              'executor:stdout',
+              '\n--- Summary saved to progress.txt ---'
+            )
           } else {
-            mainWindow.webContents.send('executor:stderr', `\n--- Failed to save summary: ${appendResult.error} ---`)
+            mainWindow.webContents.send(
+              'executor:stderr',
+              `\n--- Failed to save summary: ${appendResult.error} ---`
+            )
           }
         }
       }
@@ -268,41 +290,40 @@ export function abortCurrentProcess() {
     }
 
     const { child, requirementId } = currentProcess
-    
+
     if (!child || child.killed) {
       currentProcess = null
       return { success: false, error: 'Process already terminated' }
     }
 
     console.log(`Aborting process for requirement ${requirementId}...`)
-    
+
     // Get main window for sending messages
     const mainWindow = BrowserWindow.getAllWindows()[0]
-    
+
     // Try graceful termination first (SIGTERM)
     const killed = child.kill('SIGTERM')
-    
+
     if (!killed) {
       // If SIGTERM failed, force kill with SIGKILL
       child.kill('SIGKILL')
     }
-    
+
     // Notify frontend about abort
     if (mainWindow) {
       mainWindow.webContents.send('executor:stdout', '\n\n--- Process aborted by user ---\n')
-      mainWindow.webContents.send('executor:complete', { 
-        code: -1, 
+      mainWindow.webContents.send('executor:complete', {
+        code: -1,
         signal: 'SIGTERM',
-        aborted: true 
+        aborted: true
       })
     }
-    
+
     // Clear the reference
     currentProcess = null
-    
+
     console.log('Process aborted successfully')
     return { success: true, message: 'Process aborted successfully' }
-    
   } catch (error) {
     console.error('Error aborting process:', error)
     currentProcess = null
@@ -320,7 +341,7 @@ export function getCurrentProcessInfo() {
   if (!currentProcess) {
     return null
   }
-  
+
   return {
     requirementId: currentProcess.requirementId,
     folderPath: currentProcess.folderPath,
