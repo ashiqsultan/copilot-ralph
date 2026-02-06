@@ -164,6 +164,7 @@ export async function executeCommand(requirementId, folderPath) {
       requirement.id,
       requirement.title,
       requirement.description,
+      requirement.plan,
       progressTxt
     )
     const copilotPath = findCopilotPath()

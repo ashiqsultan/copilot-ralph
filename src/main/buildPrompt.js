@@ -1,7 +1,7 @@
-function buildPrompt(id, title, description = '', progressTxt = '') {
+function buildPrompt(id, title, description = '', plan = '', progressTxt = '') {
   if (id === null || id === undefined) throw 'id  required';
   if (!title) throw 'title required';
-  
+
   return `You are an autonomous coding agent. 
   You must complete the following requirement.
 
@@ -9,9 +9,10 @@ function buildPrompt(id, title, description = '', progressTxt = '') {
 ID: ${id}
 Title: ${title}
 Description: ${description}
+Plan:${plan}
 
 ## Progress
-This section contains the understandings from previous iterations. Can also be empty if its the initial call.
+This section contains the understandings from previous iterations. Can also be empty if this is a initial call.
 ${progressTxt}
 
 ## INSTRUCTIONS
@@ -19,8 +20,12 @@ ${progressTxt}
 - You are provided full permission and access.
 - You can execute any file file operations or execute any commands without asking permissions
 - Make all necessary decisions autonomously do NOT ask for clarification or permissions.
+- Understand the provided Plan in the requirement.
+- Based on both requirement and the provided plan prepare a step by step execution plan.
+- Implement the requirement completely.
 - When the requirement is fully implemented and working, respond with exactly: <status>done</status>
-- Make a step by step plan before proceeding
+
+IMPORTANT
 - Do NOT ask for user opinions or choice.
 - Never wait for user confirmation - act decisively
 - Never ask further questions  - make reasonable assumptions and proceed

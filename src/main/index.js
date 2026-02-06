@@ -10,6 +10,7 @@ import {
   isProcessRunning,
   getCurrentProcessInfo
 } from './ai_runner'
+import { executePlan, abortPlanProcess, isPlanRunning } from './plan_runner'
 import {
   checkCopilotStatus,
   getCopilotPath,
@@ -262,6 +263,21 @@ ipcMain.handle('git:getLog', async (event, folderPath) => {
 // IPC handler for getting all project files recursively
 ipcMain.handle('fs:getProjectFiles', async (event, folderPath) => {
   return getProjectFiles(folderPath)
+})
+
+// IPC handler for running the planner
+ipcMain.handle('planner:run', async (event, folderPath) => {
+  return executePlan(folderPath)
+})
+
+// IPC handler for aborting the planning process
+ipcMain.handle('planner:abort', async () => {
+  return abortPlanProcess()
+})
+
+// IPC handler for checking if the planner is running
+ipcMain.handle('planner:isRunning', async () => {
+  return isPlanRunning()
 })
 
 // IPC handler for selecting image files
