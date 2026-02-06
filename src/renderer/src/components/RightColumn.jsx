@@ -1,18 +1,21 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconPlayerPlayFilled, IconCancel } from '@tabler/icons-react'
+import { IconPlayerPlayFilled, IconCancel, IconListCheck } from '@tabler/icons-react'
 import ModelSelector from './ModelSelector'
 
 const RightColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
   const isRunning = useAppStore((state) => state.isRunning)
+  const isPlanRunning = useAppStore((state) => state.isPlanRunning)
   const outputLines = useAppStore((state) => state.outputLines)
   const getPrdItems = useAppStore((state) => state.getPrdItems)
   const setIsRunning = useAppStore((state) => state.setIsRunning)
+  const setIsPlanRunning = useAppStore((state) => state.setIsPlanRunning)
   const setWorkingItemId = useAppStore((state) => state.setWorkingItemId)
   const appendOutputLine = useAppStore((state) => state.appendOutputLine)
   const clearOutput = useAppStore((state) => state.clearOutput)
   const updatePrdItem = useAppStore((state) => state.updatePrdItem)
+  const setPrdItems = useAppStore((state) => state.setPrdItems)
 
   const outputContainerRef = useRef(null)
 
@@ -58,18 +61,77 @@ const RightColumn = () => {
       }
     )
 
+    // Planner IPC listeners
+    const removePlannerOutputListener = window.electron.ipcRenderer.on(
+      'planner:stdout',
+      (_, data) => {
+        appendOutputLine(data, 'stdout')
+      }
+    )
+
+    const removePlannerErrorListener = window.electron.ipcRenderer.on(
+      'planner:stderr',
+      (_, data) => {
+        appendOutputLine(data, 'stderr')
+      }
+    )
+
+    const removePlannerCompleteListener = window.electron.ipcRenderer.on(
+      'planner:complete',
+      (_, result) => {
+        if (result.aborted) {
+          appendOutputLine('\n--- Planning aborted by user ---', 'stdout')
+        } else if (result.code === 0) {
+          appendOutputLine('\n--- Planning completed successfully ---', 'success')
+        } else if (result.signal) {
+          appendOutputLine(
+            `\n--- Planning process terminated by signal: ${result.signal} ---`,
+            'error'
+          )
+        } else {
+          appendOutputLine(`\n--- Planning failed with code: ${result.code} ---`, 'error')
+        }
+        setIsPlanRunning(false)
+      }
+    )
+
+    const removePlannerSavedListener = window.electron.ipcRenderer.on(
+      'planner:plans-saved',
+      async () => {
+        // Reload PRD items from file to reflect saved plans
+        try {
+          const folderPath = useAppStore.getState().folderPath
+          if (folderPath) {
+            const prdContent = await window.electron.ipcRenderer.invoke(
+              'fs:readPrdFile',
+              folderPath
+            )
+            if (prdContent) {
+              setPrdItems(prdContent)
+            }
+          }
+        } catch (error) {
+          console.error('Failed to reload PRD items after plan save:', error)
+        }
+      }
+    )
+
     // Cleanup listeners on unmount
     return () => {
       if (removeOutputListener) removeOutputListener()
       if (removeErrorListener) removeErrorListener()
       if (removeCompleteListener) removeCompleteListener()
       if (removeMarkedDoneListener) removeMarkedDoneListener()
+      if (removePlannerOutputListener) removePlannerOutputListener()
+      if (removePlannerErrorListener) removePlannerErrorListener()
+      if (removePlannerCompleteListener) removePlannerCompleteListener()
+      if (removePlannerSavedListener) removePlannerSavedListener()
     }
-  }, [appendOutputLine, updatePrdItem])
+  }, [appendOutputLine, updatePrdItem, setIsPlanRunning, setPrdItems])
 
   // Handle start button click
   const handleStartClick = useCallback(async () => {
-    if (isRunning) {
+    if (isRunning || isPlanRunning) {
       console.log('Execution already in progress')
       return
     }
@@ -166,6 +228,7 @@ const RightColumn = () => {
     }
   }, [
     isRunning,
+    isPlanRunning,
     folderPath,
     getPrdItems,
     clearOutput,
@@ -174,12 +237,44 @@ const RightColumn = () => {
     appendOutputLine
   ])
 
+  // Handle start plan button click
+  const handleStartPlanClick = useCallback(async () => {
+    if (isRunning || isPlanRunning) {
+      console.log('Already in progress')
+      return
+    }
+
+    if (!folderPath) {
+      appendOutputLine('Error: No folder selected. Please select a folder first.', 'error')
+      return
+    }
+
+    clearOutput()
+    setIsPlanRunning(true)
+    appendOutputLine('Starting plan generation for all PRD items...', 'stdout')
+    appendOutputLine('---', 'stdout')
+
+    try {
+      const result = await window.electron.ipcRenderer.invoke('planner:run', folderPath)
+      if (!result.success) {
+        appendOutputLine(`Failed to start planner: ${result.error}`, 'error')
+        setIsPlanRunning(false)
+      }
+    } catch (error) {
+      appendOutputLine(`Error: ${error.message}`, 'error')
+      setIsPlanRunning(false)
+    }
+  }, [isRunning, isPlanRunning, folderPath, clearOutput, setIsPlanRunning, appendOutputLine])
+
   const handleAbortClick = async () => {
     try {
-      const result = await window.electron.ipcRenderer.invoke('executor:abort')
+      const channel = isPlanRunning ? 'planner:abort' : 'executor:abort'
+      const result = await window.electron.ipcRenderer.invoke(channel)
       if (result.success) {
         appendOutputLine('\n--- Abort initiated ---', 'stdout')
-        setWorkingItemId(null)
+        if (!isPlanRunning) {
+          setWorkingItemId(null)
+        }
       } else {
         appendOutputLine(`\n--- Abort failed: ${result.error} ---`, 'error')
       }
@@ -189,8 +284,15 @@ const RightColumn = () => {
   }
 
   // Get status dot color class based on status
-  const getStatusDotClass = (isRunning) => {
-    return isRunning ? 'bg-gh-yellow animate-pulse' : 'bg-gh-text-subtle'
+  const getStatusDotClass = () => {
+    if (isRunning || isPlanRunning) return 'bg-gh-yellow animate-pulse'
+    return 'bg-gh-text-subtle'
+  }
+
+  const getStatusText = () => {
+    if (isPlanRunning) return 'Planning'
+    if (isRunning) return 'Running'
+    return 'Idle'
   }
 
   // Get output line color class based on type
@@ -214,9 +316,9 @@ const RightColumn = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleStartClick}
-            disabled={isRunning}
+            disabled={isRunning || isPlanRunning}
             className={`flex items-center gap-1 bg-gh-green text-white px-3 py-1.5 rounded-md text-sm transition-colors ${
-              isRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
+              isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
             }`}
           >
             <IconPlayerPlayFilled size={18} strokeWidth={2} />
@@ -224,10 +326,21 @@ const RightColumn = () => {
           </button>
 
           <button
+            onClick={handleStartPlanClick}
+            disabled={isRunning || isPlanRunning}
+            className={`flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm transition-colors ${
+              isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+            }`}
+          >
+            <IconListCheck size={18} strokeWidth={2} />
+            Start Plan
+          </button>
+
+          <button
             onClick={handleAbortClick}
-            disabled={!isRunning}
+            disabled={!isRunning && !isPlanRunning}
             className={`flex items-center gap-1 border border-gh-red text-gh-red px-3 py-1.5 rounded-md text-sm transition-colors duration-150 ease-in-out ${
-              isRunning
+              isRunning || isPlanRunning
                 ? 'hover:bg-gh-red hover:text-white hover:border-gh-red'
                 : 'opacity-50 cursor-not-allowed'
             }`}
@@ -242,8 +355,8 @@ const RightColumn = () => {
 
         {/* Status Indicator */}
         <div className="flex items-center gap-2 pl-4">
-          <div className={`w-3 h-3 rounded-full ${getStatusDotClass(isRunning)}`} />
-          <span className="text-sm text-gh-text-muted">{isRunning ? 'Running' : 'Idle'}</span>
+          <div className={`w-3 h-3 rounded-full ${getStatusDotClass()}`} />
+          <span className="text-sm text-gh-text-muted">{getStatusText()}</span>
         </div>
       </div>
 
