@@ -95,7 +95,7 @@ const TopBar = ({ onFolderChange }) => {
   }
 
   return (
-    <header className="w-full bg-gh-surface border-b border-gh-border text-gh-text p-4">
+    <header className="w-full bg-gh-surface  text-gh-text p-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 w-full min-w-0">
           <div className="flex-shrink-0">

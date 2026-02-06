@@ -1,7 +1,8 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconPlayerPlayFilled, IconCancel, IconListCheck } from '@tabler/icons-react'
+import { IconPlayerPlayFilled, IconCancel, IconSparkles2 } from '@tabler/icons-react'
 import ModelSelector from './ModelSelector'
+import Tooltip from './Tooltip'
 
 const RightColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -315,40 +316,45 @@ const RightColumn = () => {
       {/* Header with button and status */}
       <div className="flex items-center justify-between pb-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleStartClick}
-            disabled={isRunning || isPlanRunning}
-            className={`flex items-center gap-1 bg-gh-green text-white px-3 py-1.5 rounded-md text-sm transition-colors ${
-              isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
-            }`}
-          >
-            <IconPlayerPlayFilled size={18} strokeWidth={2} />
-            Start
-          </button>
+          <Tooltip text="Plan" position="bottom">
+            <button
+              onClick={handleStartPlanClick}
+              disabled={isRunning || isPlanRunning}
+              className={`flex items-center justify-center bg-gh-blue text-white p-2 rounded-md text-sm transition-colors ${
+                isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-blue-focus'
+              }`}
+            >
+              <IconSparkles2 size={18} strokeWidth={2} />
+            </button>
+          </Tooltip>
+          
+          <Tooltip text="Start Building" position="bottom">
+            <button
+              onClick={handleStartClick}
+              disabled={isRunning || isPlanRunning}
+              className={`flex items-center justify-center bg-gh-green text-white p-2 rounded-md text-sm transition-colors ${
+                isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gh-green-hover'
+              }`}
+            >
+              <IconPlayerPlayFilled size={18} strokeWidth={2} />
+            </button>
+          </Tooltip>
 
-          <button
-            onClick={handleStartPlanClick}
-            disabled={isRunning || isPlanRunning}
-            className={`flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm transition-colors ${
-              isRunning || isPlanRunning ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-            }`}
-          >
-            <IconListCheck size={18} strokeWidth={2} />
-            Start Plan
-          </button>
+          
 
-          <button
-            onClick={handleAbortClick}
-            disabled={!isRunning && !isPlanRunning}
-            className={`flex items-center gap-1 border border-gh-red text-gh-red px-3 py-1.5 rounded-md text-sm transition-colors duration-150 ease-in-out ${
-              isRunning || isPlanRunning
-                ? 'hover:bg-gh-red hover:text-white hover:border-gh-red'
-                : 'opacity-50 cursor-not-allowed'
-            }`}
-          >
-            <IconCancel size={18} strokeWidth={2} />
-            Abort
-          </button>
+          <Tooltip text="Abort" position="bottom">
+            <button
+              onClick={handleAbortClick}
+              disabled={!isRunning && !isPlanRunning}
+              className={`flex items-center justify-center border border-gh-red text-gh-red p-2 rounded-md text-sm transition-colors duration-150 ease-in-out ${
+                isRunning || isPlanRunning
+                  ? 'hover:bg-gh-red hover:text-white hover:border-gh-red'
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+            >
+              <IconCancel size={18} strokeWidth={2} />
+            </button>
+          </Tooltip>
 
           {/* Model Selector */}
           <ModelSelector />
