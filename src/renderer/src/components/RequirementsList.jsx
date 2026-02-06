@@ -1,30 +1,9 @@
 import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconTrash, IconEdit, IconCircleCheck, IconCircleDashed, IconUpload, IconX } from '@tabler/icons-react'
+import { IconUpload, IconX } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
 import FileReferenceDropdown from './FileReferenceDropdown'
-
-const StatusIcon = ({ isDone, isItemWorking }) => {
-  if (isItemWorking) {
-    return (
-      <IconCircleDashed
-        size={20}
-        strokeWidth={2}
-        className="text-amber-500 animate-spin-slow"
-        title="In Progress"
-      />
-    )
-  }
-  return (
-    <>
-      {isDone ? (
-        <IconCircleCheck size={20} strokeWidth={2} className="text-green-500" title="Done" />
-      ) : (
-        <IconCircleDashed size={20} strokeWidth={2} className="text-blue-500" title="In Progress" />
-      )}
-    </>
-  )
-}
+import RequirementsView from './RequirementsView'
 
 const RequirementsList = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -45,6 +24,8 @@ const RequirementsList = () => {
   const [showFileDropdown, setShowFileDropdown] = useState(false)
   const [fileSearchQuery, setFileSearchQuery] = useState('')
   const [atTriggerPosition, setAtTriggerPosition] = useState(null)
+  const [formPlan, setFormPlan] = useState('')
+  const [hasPlanField, setHasPlanField] = useState(false)
   const descriptionRef = useRef(null)
 
   // Fetch project files from backend
@@ -66,6 +47,8 @@ const RequirementsList = () => {
     setFormTitle('')
     setFormDescription('')
     setFormAttachments([])
+    setFormPlan('')
+    setHasPlanField(false)
     setShowForm(true)
     fetchProjectFiles()
   }
@@ -77,6 +60,8 @@ const RequirementsList = () => {
     setFormTitle('')
     setFormDescription('')
     setFormAttachments([])
+    setFormPlan('')
+    setHasPlanField(false)
     setShowFileDropdown(false)
     setFileSearchQuery('')
     setAtTriggerPosition(null)
@@ -90,6 +75,13 @@ const RequirementsList = () => {
       setFormTitle(item.title)
       setFormDescription(item.description)
       setFormAttachments(item.attachments || [])
+      if ('plan' in item) {
+        setFormPlan(item.plan)
+        setHasPlanField(true)
+      } else {
+        setFormPlan('')
+        setHasPlanField(false)
+      }
       setShowForm(true)
       fetchProjectFiles()
     }
@@ -241,12 +233,16 @@ const RequirementsList = () => {
       // Edit existing item
       const itemIndex = updatedItems.findIndex((item) => item.id === editingItemId)
       if (itemIndex !== -1) {
-        updatedItems[itemIndex] = {
+        const updatedItem = {
           ...updatedItems[itemIndex],
           title,
           description: description || 'No description',
           attachments: formAttachments.length > 0 ? formAttachments : undefined
         }
+        if (hasPlanField) {
+          updatedItem.plan = formPlan
+        }
+        updatedItems[itemIndex] = updatedItem
       }
     } else {
       // Create new item
@@ -283,8 +279,6 @@ const RequirementsList = () => {
       alert('Failed to save requirement')
     }
   }
-
-  const isItemWorking = (id, workingItemId) => id == workingItemId
 
   return (
     <div className="space-y-4">
@@ -329,6 +323,18 @@ const RequirementsList = () => {
               textareaRef={descriptionRef}
             />
           </div>
+          {editingItemId !== null && hasPlanField && (
+            <div>
+              <label className="block text-sm font-medium text-gh-text mb-1">Plan</label>
+              <textarea
+                value={formPlan}
+                onChange={(e) => setFormPlan(e.target.value)}
+                className="w-full px-3 py-2 bg-gh-bg border border-gh-border-muted rounded-md text-gh-text focus:outline-none focus:ring-2 focus:ring-gh-blue-focus focus:border-transparent placeholder-gh-text-muted"
+                rows="3"
+                placeholder="Enter plan"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gh-text mb-1">Attachments</label>
             <button
@@ -379,66 +385,12 @@ const RequirementsList = () => {
       )}
 
       {/* Requirements List */}
-      <div className="space-y-2">
-        {prdItems.length === 0 ? (
-          <p className="text-gh-text-muted italic">No items found. Create a new item to see</p>
-        ) : (
-          prdItems.map((item) => (
-            <div
-              key={item.id}
-              className="p-3 bg-gh-surface border border-gh-border-muted rounded-md"
-            >
-              <div className="">
-                {/* title and buttons */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <StatusIcon
-                      isDone={item.isDone}
-                      isItemWorking={isItemWorking(item.id, workingItemId)}
-                    />
-                    <h4 className="font-medium text-gh-text">{item.title}</h4>
-                  </div>
-                  {/* buttons div */}
-                  <div>
-                    <button
-                      onClick={() => handleEditItem(item.id)}
-                      className="p-2 text-gh-text-muted hover:text-gh-blue hover:bg-gh-blue-focus/10 rounded transition-colors"
-                      title="Edit requirement"
-                    >
-                      <IconEdit size={20} strokeWidth={2} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="p-2 text-gh-text-muted hover:text-gh-red hover:bg-gh-red/10 rounded transition-colors"
-                      title="Delete requirement"
-                    >
-                      <IconTrash size={20} strokeWidth={2} />
-                    </button>
-                  </div>
-                </div>
-                {/* descriptions */}
-                <div>
-                  <p className="text-sm text-gh-text-muted">{item.description}</p>
-                </div>
-                {/* attachments */}
-                {item.attachments && item.attachments.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {item.attachments.map((attachment, index) => (
-                      <span
-                        key={index}
-                        className="text-xs px-2 py-0.5 bg-gh-bg border border-gh-border-muted rounded text-gh-text-muted"
-                        title={attachment.path}
-                      >
-                        📎 {attachment.displayName}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <RequirementsView
+        prdItems={prdItems}
+        workingItemId={workingItemId}
+        onEdit={handleEditItem}
+        onDelete={handleDeleteItem}
+      />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
