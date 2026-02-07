@@ -44,9 +44,10 @@ Important:
 
 ## Output Instructions
 Keep your plans, small and concise. Do not give detailed instructions.
+Format each plan as a multi-line string with line breaks (\n) between logical steps for readability.
 Output must be in JSON in the following format
 Array of plan items with respective prd requiremnt ids
-example: [{id:0,plan:"string"}, {id:1,plan:"string"}]
+example: [{id:0,plan:"Step 1 description\nStep 2 description\nStep 3 description"}, {id:1,plan:"Step 1\nStep 2"}]
 
 JSON SCHEMA
 {
@@ -79,11 +80,11 @@ examplePRD1 [
 exampleOutput1 [
   {
     "id": 0,
-    "plan": "Check existing theme implementation in src/styles or context. Add ThemeContext if missing. Create ToggleSwitch component in src/components/ui. Update Navigation component to include toggle, wire to theme state. Add CSS variables for dark mode colors."
+    "plan": "1. Check existing theme implementation in src/styles or context\n2. Add ThemeContext if missing\n3. Create ToggleSwitch component in src/components/ui\n4. Update Navigation component to include toggle, wire to theme state\n5. Add CSS variables for dark mode colors"
   },
   {
     "id": 1,
-    "plan": "Create Dropdown component in src/components/ui if not exists. Add ProfileDropdown in src/components/navigation wrapping user avatar. Include menu items for Profile, Settings, Logout. Wire logout to existing auth context/hook. Position absolutely with z-index, add click-outside handler."
+    "plan": "1. Create Dropdown component in src/components/ui if not exists\n2. Add ProfileDropdown in src/components/navigation wrapping user avatar\n3. Include menu items for Profile, Settings, Logout\n4. Wire logout to existing auth context/hook\n5. Position absolutely with z-index, add click-outside handler"
   }
 ];
 
@@ -95,11 +96,11 @@ examplePRD2 [
 exampleOutput2 [
   {
     "id": 0,
-    "plan": "Create GET /api/users/{user_id}/orders endpoint in routes/orders.py. Add OrderService.get_user_orders() in services/order_service.py querying orders table filtered by user_id. Return serialized order list with OrderSchema. Add authentication middleware check."
+    "plan": "1. Create GET /api/users/{user_id}/orders endpoint in routes/orders.py\n2. Add OrderService.get_user_orders() in services/order_service.py\n3. Query orders table filtered by user_id\n4. Return serialized order list with OrderSchema\n5. Add authentication middleware check"
   },
   {
     "id": 1,
-    "plan": "Add page and limit query params to orders endpoint. Update OrderService.get_user_orders() to accept offset/limit, modify query with .limit().offset(). Return paginated response with total_count, page, page_size, and results array. Default to page=1, limit=20."
+    "plan": "1. Add page and limit query params to orders endpoint\n2. Update OrderService.get_user_orders() to accept offset/limit\n3. Modify query with .limit().offset()\n4. Return paginated response with total_count, page, page_size, results\n5. Default to page=1, limit=20"
   }
 ];
 
@@ -111,11 +112,11 @@ examplePRD3 [
 exampleOutput3 [
   {
     "id": 0,
-    "plan": "Create RegistrationForm component with useState for currentStep (1-3). Build Step1 (email), Step2 (password), Step3 (profile) as separate components. Add Next/Previous buttons, disable Previous on step 1. Store form data in parent state, pass down with callbacks. Final step triggers API submission."
+    "plan": "1. Create RegistrationForm component with useState for currentStep (1-3)\n2. Build Step1 (email), Step2 (password), Step3 (profile) as separate components\n3. Add Next/Previous buttons, disable Previous on step 1\n4. Store form data in parent state, pass down with callbacks\n5. Final step triggers API submission"
   },
   {
     "id": 1,
-    "plan": "Install react-hook-form and yup/zod. Create validation schemas for each step (email format, password strength, required fields). Add useForm hook per step component. Display error messages below inputs using form state. Disable Next button until step is valid."
+    "plan": "1. Install react-hook-form and yup/zod\n2. Create validation schemas for each step\n3. Add useForm hook per step component\n4. Display error messages below inputs using form state\n5. Disable Next button until step is valid"
   }
 ];
 
@@ -127,11 +128,11 @@ examplePRD4 [
 exampleOutput4 [
   {
     "id": 0,
-    "plan": "Create scripts/import_csv.py with parse_csv() using pandas.read_csv(). Add import_to_db() function iterating rows, creating model instances, bulk_create for efficiency. Accept file path as CLI argument. Use existing DB models from models.py. Add progress logging."
+    "plan": "1. Create scripts/import_csv.py with parse_csv() using pandas.read_csv()\n2. Add import_to_db() function iterating rows\n3. Create model instances, use bulk_create for efficiency\n4. Accept file path as CLI argument\n5. Use existing DB models from models.py\n6. Add progress logging"
   },
   {
     "id": 1,
-    "plan": "Wrap row processing in try-except block catching ValueError, KeyError. Log errors with row number to errors.log. Add --strict flag to halt on error vs continue. Validate required columns exist before processing. Return summary with success/error counts."
+    "plan": "1. Wrap row processing in try-except block catching ValueError, KeyError\n2. Log errors with row number to errors.log\n3. Add --strict flag to halt on error vs continue\n4. Validate required columns exist before processing\n5. Return summary with success/error counts"
   }
 ];
 
@@ -143,11 +144,11 @@ examplePRD5 [
 exampleOutput5 [
   {
     "id": 0,
-    "plan": "Check if Redux/Zustand exists, else create CartContext in src/context/CartContext.js. Define state shape: {items: [], total: 0}. Implement addItem, removeItem, updateQuantity, clearCart actions. Wrap App with CartProvider. Create useCart hook for components."
+    "plan": "1. Check if Redux/Zustand exists, else create CartContext in src/context/CartContext.js\n2. Define state shape: {items: [], total: 0}\n3. Implement addItem, removeItem, updateQuantity, clearCart actions\n4. Wrap App with CartProvider\n5. Create useCart hook for components"
   },
   {
     "id": 1,
-    "plan": "Add useEffect in CartContext to localStorage.setItem on cart state changes. On context init, check localStorage.getItem('cart'), parse and set initial state. Add try-catch for JSON parse errors. Consider debouncing saves to avoid excessive writes."
+    "plan": "1. Add useEffect in CartContext to localStorage.setItem on cart state changes\n2. On context init, check localStorage.getItem('cart'), parse and set initial state\n3. Add try-catch for JSON parse errors\n4. Consider debouncing saves to avoid excessive writes"
   }
 ];
 
@@ -159,11 +160,11 @@ examplePRD6 [
 exampleOutput6 [
   {
     "id": 0,
-    "plan": "Install PyJWT. Create auth/jwt_handler.py with create_token() and verify_token() functions. Add JWTAuthMiddleware to middleware.py checking Authorization header, validating token, attaching user to request. Apply middleware to protected routes. Use SECRET_KEY from env."
+    "plan": "1. Install PyJWT\n2. Create auth/jwt_handler.py with create_token() and verify_token() functions\n3. Add JWTAuthMiddleware to middleware.py checking Authorization header\n4. Validate token, attach user to request\n5. Apply middleware to protected routes\n6. Use SECRET_KEY from env"
   },
   {
     "id": 1,
-    "plan": "Create POST /auth/login in routes/auth.py accepting email/password, validating credentials, returning access_token and refresh_token. Add POST /auth/refresh accepting refresh_token, validating it, issuing new access_token. Set access token expiry to 15min, refresh to 7days."
+    "plan": "1. Create POST /auth/login in routes/auth.py accepting email/password\n2. Validate credentials, return access_token and refresh_token\n3. Add POST /auth/refresh accepting refresh_token\n4. Validate refresh token, issue new access_token\n5. Set access token expiry to 15min, refresh to 7days"
   }
 ];
 
@@ -175,11 +176,11 @@ examplePRD7 [
 exampleOutput7 [
   {
     "id": 0,
-    "plan": "Install react-window or react-virtualized. Replace current list rendering with FixedSizeList component. Calculate item height, set list height to viewport. Render only visible items + buffer. Memoize ProductCard component with React.memo. Move expensive computations to useMemo."
+    "plan": "1. Install react-window or react-virtualized\n2. Replace current list rendering with FixedSizeList component\n3. Calculate item height, set list height to viewport\n4. Render only visible items + buffer\n5. Memoize ProductCard component with React.memo\n6. Move expensive computations to useMemo"
   },
   {
     "id": 1,
-    "plan": "Add search input and filter dropdowns above list. Use useDeferredValue for search to avoid blocking. Filter products array based on search term and selected filters before passing to virtualized list. Debounce search input by 300ms. Reset scroll position when filters change."
+    "plan": "1. Add search input and filter dropdowns above list\n2. Use useDeferredValue for search to avoid blocking\n3. Filter products array based on search term and selected filters\n4. Pass filtered array to virtualized list\n5. Debounce search input by 300ms\n6. Reset scroll position when filters change"
   }
 ];
 </EXAMPLE_INPUTS_OUTPUTS>

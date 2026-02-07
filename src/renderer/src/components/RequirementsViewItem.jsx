@@ -62,7 +62,7 @@ const RequirementsViewItem = ({ item, workingItemId, onEdit, onDelete }) => {
         {/* plan */}
         {item.plan && (
           <div className="mt-1">
-            <p className="text-sm text-gh-text-muted"><span className="font-medium text-gh-text">Plan:</span> {item.plan}</p>
+            <p className="text-sm text-gh-text-muted whitespace-pre-line"><span className="font-medium text-gh-text">Plan:</span> {item.plan}</p>
           </div>
         )}
         {/* attachments */}
