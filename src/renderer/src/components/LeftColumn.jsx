@@ -4,6 +4,9 @@ import RequirementsList from './RequirementsList'
 import Intro from './Intro'
 import ProgressTab from './ProgressTab'
 import GitLogsTab from './GitLogsTab'
+import { IconFilePlus, IconFileText, IconHistory, IconBrandGit } from '@tabler/icons-react'
+import Tooltip from './Tooltip'
+import TabHeaderItem from './TabHeaderItem'
 
 const LeftColumn = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -76,12 +79,14 @@ const LeftColumn = () => {
 
       {/* Create PRD button (shown when folder selected but no prd.json exists) */}
       {folderPath && !hasPrdFile && (
-        <button
-          onClick={createPrdFile}
-          className="mb-4 bg-gh-green hover:bg-gh-green-hover text-white font-medium py-2 px-4 rounded-md"
-        >
-          Create prd.json
-        </button>
+        <Tooltip text="Create prd.json" position="right">
+          <button
+            onClick={createPrdFile}
+            className="mb-4 bg-gh-green hover:bg-gh-green-hover text-white font-medium p-2 rounded-md flex items-center justify-center"
+          >
+            <IconFilePlus size={20} strokeWidth={2} />
+          </button>
+        </Tooltip>
       )}
 
       {/* Tab view (shown when prd.json exists) */}
@@ -89,36 +94,30 @@ const LeftColumn = () => {
         <>
           {/* Tab headers */}
           <div className="flex border-b border-gh-border mb-4">
-            <button
-              onClick={() => setActiveTab('requirements')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === 'requirements'
-                  ? 'text-gh-text-primary border-b-2 border-gh-green'
-                  : 'text-gh-text-secondary hover:text-gh-text-primary'
-              }`}
-            >
-              Requirements
-            </button>
-            <button
-              onClick={() => setActiveTab('progress')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === 'progress'
-                  ? 'text-gh-text-primary border-b-2 border-gh-green'
-                  : 'text-gh-text-secondary hover:text-gh-text-primary'
-              }`}
-            >
-              Progress
-            </button>
-            <button
-              onClick={() => setActiveTab('gitLogs')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === 'gitLogs'
-                  ? 'text-gh-text-primary border-b-2 border-gh-green'
-                  : 'text-gh-text-secondary hover:text-gh-text-primary'
-              }`}
-            >
-              Git Logs
-            </button>
+            <TabHeaderItem
+              id="requirements"
+              activeId={activeTab}
+              onClick={setActiveTab}
+              tooltipText="Requirements"
+              Icon={IconFileText}
+              label="Requirement"
+            />
+            <TabHeaderItem
+              id="progress"
+              activeId={activeTab}
+              onClick={setActiveTab}
+              tooltipText="Progress"
+              Icon={IconHistory}
+              label="Progress"
+            />
+            <TabHeaderItem
+              id="gitLogs"
+              activeId={activeTab}
+              onClick={setActiveTab}
+              tooltipText="Git Logs"
+              Icon={IconBrandGit}
+              label="Git"
+            />
           </div>
 
           {/* Tab content */}
