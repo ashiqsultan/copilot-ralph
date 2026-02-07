@@ -1,46 +1,39 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useAppStore } from '../store/appStore'
-import {
-  IconFolder,
-  IconFolderPlus,
-  IconFolderOpen,
-  IconSettings
-} from '@tabler/icons-react'
+import { IconFolderOpen, IconSettings } from '@tabler/icons-react'
 import Logo from './Logo'
 import Tooltip from './Tooltip'
 
-const TopBar = ({ onFolderChange }) => {
+const TopBar = () => {
   const folderPath = useAppStore((state) => state.folderPath)
   const setFolderPath = useAppStore((state) => state.setFolderPath)
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [projectName, setProjectName] = useState('')
   const setIsCopilotSettingsOpen = useAppStore((state) => state.setIsCopilotSettingsOpen)
 
-  // Handle open folder button click
-  const handleOpenFolder = useCallback(async () => {
-    try {
-      // Use the electron API to open folder dialog
-      const selectedPath = await window.electron.ipcRenderer.invoke('dialog:openFolder')
-
-      if (selectedPath) {
-        setFolderPath(selectedPath)
-        console.log('Folder selected:', selectedPath)
-
-        // Notify parent component of folder change
-        if (onFolderChange) {
-          onFolderChange(selectedPath)
-        }
-      }
-    } catch (error) {
-      console.error('Error opening folder:', error)
+  // Listen for menu actions
+  useEffect(() => {
+    // Listen for folder selection from menu
+    const handleFolderSelected = (event, folderPath) => {
+      setFolderPath(folderPath)
+      console.log('Folder selected from menu:', folderPath)
     }
-  }, [onFolderChange, setFolderPath])
 
-  // Handle new project button click
-  const handleNewProject = useCallback(() => {
-    setShowNewProjectDialog(true)
-    setProjectName('')
-  }, [])
+    // Listen for new project request from menu
+    const handleNewProject = () => {
+      setShowNewProjectDialog(true)
+      setProjectName('')
+    }
+
+    window.electron.ipcRenderer.on('menu:folderSelected', handleFolderSelected)
+    window.electron.ipcRenderer.on('menu:newProject', handleNewProject)
+
+    // Cleanup
+    return () => {
+      window.electron.ipcRenderer.removeListener('menu:folderSelected', handleFolderSelected)
+      window.electron.ipcRenderer.removeListener('menu:newProject', handleNewProject)
+    }
+  }, [setFolderPath])
 
   // Handle creating the new project
   const handleCreateProject = useCallback(async () => {
@@ -60,17 +53,12 @@ const TopBar = ({ onFolderChange }) => {
         console.log('Project created:', projectPath)
         setShowNewProjectDialog(false)
         setProjectName('')
-
-        // Notify parent component of folder change
-        if (onFolderChange) {
-          onFolderChange(projectPath)
-        }
       }
     } catch (error) {
       console.error('Error creating project:', error)
       alert('Failed to create project: ' + error.message)
     }
-  }, [projectName, onFolderChange, setFolderPath])
+  }, [projectName, setFolderPath])
 
   // Handle cancel dialog
   const handleCancelDialog = useCallback(() => {
@@ -101,28 +89,7 @@ const TopBar = ({ onFolderChange }) => {
           <div className="flex-shrink-0">
             <Logo />
           </div>
-          {/* buttons: max 30% */}
-          <div className="flex gap-2 w-[20%] min-w-[120px]">
-            <Tooltip text="Open an existing folder" position="bottom">
-              <button
-                onClick={handleOpenFolder}
-                className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-              >
-                <IconFolder color="white" size={18} />
-                Open
-              </button>
-            </Tooltip>
-            <Tooltip text="Create a new project" position="bottom">
-              <button
-                onClick={handleNewProject}
-                className="bg-gh-green hover:bg-gh-green-hover text-white font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 text-sm"
-              >
-                <IconFolderPlus color="white" size={18} />
-                New
-              </button>
-            </Tooltip>
-          </div>
-          {/* folder path: 70% with truncation */}
+          {/* folder path: takes available space with truncation */}
           <div className="flex-1 text-center mx-4 min-w-0">
             {folderPath ? (
               <>
@@ -138,15 +105,19 @@ const TopBar = ({ onFolderChange }) => {
                     <IconFolderOpen size={18} />
                   </button>
                 </div>
-                <div className="text-gh-text-muted font-mono text-xs truncate mt-1">{folderPath}</div>
+                <div className="text-gh-text-muted font-mono text-xs truncate mt-1">
+                  {folderPath}
+                </div>
               </>
             ) : (
-              <div className="text-gh-text-muted">No folder selected</div>
+              <div className="text-gh-text-muted">
+                No folder selected - Use the menu to open a folder or create a new project
+              </div>
             )}
           </div>
         </div>
 
-        <div className="w-[10%] text-center">
+        <div className="text-center">
           <Tooltip text="Settings" position="bottom">
             <button
               onClick={onCopilotIconClick}
