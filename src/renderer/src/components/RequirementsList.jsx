@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
-import { IconUpload, IconX } from '@tabler/icons-react'
+import { IconUpload, IconX, IconPlus, IconCheck } from '@tabler/icons-react'
 import ConfirmDialog from './ConfirmDialog'
 import FileReferenceDropdown from './FileReferenceDropdown'
 import RequirementsView from './RequirementsView'
+import Tooltip from './Tooltip'
 
 const RequirementsList = () => {
   const folderPath = useAppStore((state) => state.folderPath)
@@ -283,12 +284,14 @@ const RequirementsList = () => {
   return (
     <div className="space-y-4">
       {/* Create New Requirement Button */}
-      <button
-        onClick={handleCreateNewRequirement}
-        className="bg-gh-green hover:bg-gh-green-hover text-white font-medium py-2 px-4 rounded-md"
-      >
-        Add Requirement
-      </button>
+      <Tooltip text="Add Requirement" position="right">
+        <button
+          onClick={handleCreateNewRequirement}
+          className="bg-gh-green hover:bg-gh-green-hover text-white font-medium p-2 rounded-md flex items-center justify-center"
+        >
+          <IconPlus size={20} strokeWidth={2} />
+        </button>
+      </Tooltip>
 
       {/* Input Form */}
       {showForm && (
@@ -337,14 +340,15 @@ const RequirementsList = () => {
           )}
           <div>
             <label className="block text-sm font-medium text-gh-text mb-1">Attachments</label>
-            <button
-              onClick={handleUploadImages}
-              disabled={isUploading}
-              className="flex items-center gap-2 px-3 py-2 bg-gh-bg border border-gh-border-muted rounded-md text-gh-text hover:bg-gh-border-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <IconUpload size={18} strokeWidth={2} />
-              {isUploading ? 'Uploading...' : 'Upload Images'}
-            </button>
+            <Tooltip text={isUploading ? 'Uploading...' : 'Upload Images'} position="right">
+              <button
+                onClick={handleUploadImages}
+                disabled={isUploading}
+                className="flex items-center justify-center p-2 bg-gh-bg border border-gh-border-muted rounded-md text-gh-text hover:bg-gh-border-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <IconUpload size={18} strokeWidth={2} />
+              </button>
+            </Tooltip>
             {formAttachments.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {formAttachments.map((attachment, index) => (
@@ -368,18 +372,22 @@ const RequirementsList = () => {
             )}
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="bg-gh-green hover:bg-gh-green-hover text-white font-medium py-2 px-4 rounded-md"
-            >
-              Okay
-            </button>
-            <button
-              onClick={handleCancel}
-              className="bg-gh-border hover:bg-gh-border-muted text-gh-text font-medium py-2 px-4 rounded-md border border-gh-border-muted"
-            >
-              Cancel
-            </button>
+            <Tooltip text="Save" position="bottom">
+              <button
+                onClick={handleSave}
+                className="bg-gh-green hover:bg-gh-green-hover text-white font-medium p-2 rounded-md flex items-center justify-center"
+              >
+                <IconCheck size={18} strokeWidth={2} />
+              </button>
+            </Tooltip>
+            <Tooltip text="Cancel" position="bottom">
+              <button
+                onClick={handleCancel}
+                className="bg-gh-border hover:bg-gh-border-muted text-gh-text font-medium p-2 rounded-md border border-gh-border-muted flex items-center justify-center"
+              >
+                <IconX size={18} strokeWidth={2} />
+              </button>
+            </Tooltip>
           </div>
         </div>
       )}
