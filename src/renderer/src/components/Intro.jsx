@@ -66,7 +66,7 @@ const Intro = () => {
         {/* Logo + Heading */}
         <div className="space-y-3">
           <IconBrandGithubCopilot
-            size={48}
+            size={54}
             strokeWidth={1.2}
             className="mx-auto text-gh-text-muted"
           />
@@ -79,7 +79,7 @@ const Intro = () => {
           {/* Open folder – clickable */}
           <button
             onClick={handleOpenFolder}
-            className="flex-1 flex flex-col items-center gap-2 px-4 py-4 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
+            className="flex-1 flex flex-col items-center gap-1 px-3 py-3 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
           >
             <IconFolder size={20} className="text-gh-text-muted group-hover:text-gh-blue" />
             <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
@@ -90,7 +90,7 @@ const Intro = () => {
           {/* New project – clickable */}
           <button
             onClick={handleNewProject}
-            className="flex-1 flex flex-col items-center gap-2 px-4 py-4 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
+            className="flex-1 flex flex-col items-center gap-1 px-3 py-3 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
           >
             <IconFolderPlus size={20} className="text-gh-text-muted group-hover:text-gh-blue" />
             <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
