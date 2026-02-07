@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react'
 import {
   IconFolder,
-  IconFileText,
   IconBrandGithubCopilot,
   IconPlayerPlay,
-  IconFolderPlus
+  IconFolderPlus,
+  IconEdit,
+  IconListCheck,
+  IconBed,
+  IconBrandYoutube
 } from '@tabler/icons-react'
 import { useAppStore } from '../store/appStore'
 
@@ -12,6 +15,8 @@ const Intro = () => {
   const setFolderPath = useAppStore((state) => state.setFolderPath)
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [projectName, setProjectName] = useState('')
+  // TODO: Update actual video
+  const TUTORIAL_URL = 'https://www.youtube.com'
 
   const handleOpenFolder = useCallback(async () => {
     try {
@@ -65,65 +70,67 @@ const Intro = () => {
             strokeWidth={1.2}
             className="mx-auto text-gh-text-muted"
           />
-          <h1 className="text-2xl font-semibold text-gh-text tracking-tight">
-            Copilot Ralph
-          </h1>
+          <h1 className="text-2xl font-semibold text-gh-text tracking-tight">Copilot Ralph</h1>
           <p className="text-sm text-gh-text-muted">Get started by opening a project</p>
         </div>
 
-        {/* Steps */}
-        <div className="space-y-2 text-left">
+        {/* Action buttons side by side */}
+        <div className="flex gap-0.5">
           {/* Open folder – clickable */}
           <button
             onClick={handleOpenFolder}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md hover:bg-gh-surface transition-colors text-left group"
+            className="flex-1 flex flex-col items-center gap-2 px-4 py-4 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
           >
-            <IconFolder size={18} className="text-gh-text-muted group-hover:text-gh-blue flex-shrink-0" />
-            <div className="min-w-0">
-              <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
-                Open a folder
-              </span>
-              <p className="text-xs text-gh-text-muted mt-0.5">
-                Choose an existing codebase to work on
-              </p>
-            </div>
+            <IconFolder size={20} className="text-gh-text-muted group-hover:text-gh-blue" />
+            <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
+              Open Folder
+            </span>
           </button>
 
           {/* New project – clickable */}
           <button
             onClick={handleNewProject}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md hover:bg-gh-surface transition-colors text-left group"
+            className="flex-1 flex flex-col items-center gap-2 px-4 py-4 rounded-md hover:bg-gh-surface border border-transparent hover:border-gh-border transition-colors group"
           >
-            <IconFolderPlus size={18} className="text-gh-text-muted group-hover:text-gh-blue flex-shrink-0" />
-            <div className="min-w-0">
-              <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
-                Create a new project
-              </span>
-              <p className="text-xs text-gh-text-muted mt-0.5">
-                Start fresh with a brand-new folder
-              </p>
-            </div>
+            <IconFolderPlus size={20} className="text-gh-text-muted group-hover:text-gh-blue" />
+            <span className="text-sm text-gh-text group-hover:text-gh-blue transition-colors">
+              New Project
+            </span>
           </button>
+        </div>
 
-          {/* Create tasks – informational */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-md">
-            <IconFileText size={18} className="text-gh-text-muted flex-shrink-0" />
-            <div className="min-w-0">
-              <span className="text-sm text-gh-text-muted">Create tasks</span>
-              <p className="text-xs text-gh-text-muted mt-0.5">
-                Define your requirements like a todo list
+        {/* Instructions - styled differently */}
+        <div className="space-y-3 pt-1">
+          {/* <p className="text-sm text-gh-text-muted font-medium tracking-wide">How to use</p> */}
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <IconEdit size={16} className="text-gh-text-muted mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gh-text-muted leading-relaxed">Define your tasks</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <IconListCheck size={16} className="text-gh-text-muted mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gh-text-muted leading-relaxed">
+                Click Plan (Optional but recommended)
               </p>
             </div>
-          </div>
-
-          {/* Click start – informational */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-md">
-            <IconPlayerPlay size={18} className="text-gh-text-muted flex-shrink-0" />
-            <div className="min-w-0">
-              <span className="text-sm text-gh-text-muted">Click start</span>
-              <p className="text-xs text-gh-text-muted mt-0.5">
-                Ralph will work on your requirements while you nap
-              </p>
+            <div className="flex items-start gap-2">
+              <IconPlayerPlay size={16} className="text-gh-text-muted mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gh-text-muted leading-relaxed">Click start</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <IconBrandYoutube size={16} className="text-gh-text-muted mt-0.5 flex-shrink-0" />
+              <a
+                href={TUTORIAL_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-gh-text-muted leading-relaxed hover:text-gh-blue transition-colors"
+              >
+                Watch video tutorial
+              </a>
+            </div>
+            <div className="flex items-start gap-2">
+              <IconBed size={16} className="text-gh-text-muted mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gh-text-muted leading-relaxed">Go take a nap</p>
             </div>
           </div>
         </div>
